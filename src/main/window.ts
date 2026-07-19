@@ -239,15 +239,24 @@ export function applyTitleBarOverlay(
  * @returns {WindowSizeLimits} 制限値
  */
 export function getWindowSizeLimits(): WindowSizeLimits {
-	const display  = screen.getPrimaryDisplay();
-	const workArea = display.workArea;
+	try {
+		const display  = screen.getPrimaryDisplay();
+		const workArea = display.workArea;
 
-	return {
-		minWidth : MIN_WINDOW_WIDTH,
-		minHeight: MIN_WINDOW_HEIGHT,
-		maxWidth : workArea.width,
-		maxHeight: workArea.height,
-	};
+		return {
+			minWidth : MIN_WINDOW_WIDTH,
+			minHeight: MIN_WINDOW_HEIGHT,
+			maxWidth : workArea.width,
+			maxHeight: workArea.height,
+		};
+	} catch {
+		return {
+			minWidth : MIN_WINDOW_WIDTH,
+			minHeight: MIN_WINDOW_HEIGHT,
+			maxWidth : DEFAULT_WINDOW_WIDTH,
+			maxHeight: DEFAULT_WINDOW_HEIGHT,
+		};
+	}
 }
 
 /**
