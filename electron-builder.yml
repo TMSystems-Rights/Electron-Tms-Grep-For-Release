@@ -1,0 +1,40 @@
+appId: jp.tm-systems.tms-grep
+productName: TMS-GREP
+copyright: Copyright © 2026 TMSystems
+directories:
+  output: release/${version}
+  buildResources: build
+files:
+  - dist/**/*
+  - package.json
+extraResources:
+  - from: build/icon.ico
+    to: icon.ico
+artifactName: TmsGrep-${version}-setup.${ext}
+publish:
+  provider: github
+  owner: TMSystems-Rights
+  repo: Electron-Tms-Grep-For-Release
+  releaseType: release
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+  icon: icon.ico
+  executableName: TmsGrep
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  allowElevation: true
+  perMachine: false
+  createDesktopShortcut: false
+  createStartMenuShortcut: true
+  shortcutName: TMS-GREP
+  installerIcon: icon.ico
+  uninstallerIcon: icon.ico
+  include: installer.nsh
+  installerLanguages:
+    - ja_JP
+  language: "1041"
+  uninstallDisplayName: TMS-GREP

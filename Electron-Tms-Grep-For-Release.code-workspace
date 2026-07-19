@@ -1,0 +1,17 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"files.watcherExclude": {
+			"**/release/**": true,
+			"**/release-*/**": true
+		},
+		"search.exclude": {
+			"**/release/**": true,
+			"**/release-*/**": true
+		}
+	}
+}

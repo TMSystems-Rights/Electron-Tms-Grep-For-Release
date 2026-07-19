@@ -1,0 +1,65 @@
+{
+	"name": "tms-grep",
+	"version": "1.1.1",
+	"description": "Everything Search とファイル内検索を組み合わせた Windows 向け GUI 全文検索アプリ",
+	"main": "dist/main/main.js",
+	"scripts": {
+		"build:ts": "tsc -p tsconfig.json",
+		"copy:renderer": "copyfiles -u 2 \"src/renderer/**/*\" dist/renderer",
+		"build": "npm run build:ts && npm run copy:renderer",
+		"start": "npm run build && electron .",
+		"dev": "npm run build && electron .",
+		"predist": "pwsh -NoProfile -File scripts/ensure-dist-ready.ps1",
+		"predist:publish": "pwsh -NoProfile -File scripts/ensure-dist-ready.ps1",
+		"dist": "npm run build && electron-builder",
+		"dist:publish": "npm run build && electron-builder --publish always",
+		"icon:build": "pwsh scripts/build-icon.ps1",
+		"lint": "eslint . && npm run format:renderer:check",
+		"lint:fix": "eslint . --fix && npm run format:renderer",
+		"format:renderer": "node scripts/format-renderer-assets.mjs",
+		"format:renderer:check": "node scripts/format-renderer-assets.mjs --check",
+		"test:config-store": "npm run build:ts && node scripts/run-electron-test.mjs scripts/test-config-store.mjs",
+		"test:es-args": "npm run build:ts && node scripts/run-electron-test.mjs scripts/test-es-args.mjs",
+		"test:content-search": "node scripts/create-fixtures.mjs && npm run build:ts && node scripts/run-electron-test.mjs scripts/test-content-search.mjs",
+		"test:search-job": "node scripts/create-fixtures.mjs && npm run build:ts && node scripts/run-electron-test.mjs scripts/test-search-job.mjs",
+		"test:env-resolver": "npm run build:ts && node scripts/test-env-resolver.mjs",
+		"test:copy-format": "npm run build:ts && node scripts/test-copy-format.mjs",
+		"test:copy-text-transform": "npm run build:ts && node scripts/test-copy-text-transform.mjs",
+		"test:update-error": "npm run build:ts && node scripts/test-update-error.mjs",
+		"test:ui": "npm run build && node scripts/run-electron-test.mjs scripts/test-ui.mjs",
+		"test": "node --test scripts/test-placeholder.mjs && npm run test:config-store && npm run test:es-args && npm run test:content-search && npm run test:search-job && npm run test:env-resolver && npm run test:copy-format && npm run test:copy-text-transform && npm run test:update-error && npm run test:ui"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/TMSystems-Rights/Electron-Tms-Grep-For-Release.git"
+	},
+	"keywords": [
+		"electron",
+		"grep",
+		"everything",
+		"search"
+	],
+	"author": "TMSystems",
+	"license": "UNLICENSED",
+	"type": "commonjs",
+	"dependencies": {
+		"electron-updater": "^6.8.9",
+		"iconv-lite": "^0.6.3"
+	},
+	"devDependencies": {
+		"@eslint/js": "^9.39.4",
+		"@types/node": "^22.15.30",
+		"copyfiles": "^2.4.1",
+		"electron": "^41.2.1",
+		"electron-builder": "^26.8.1",
+		"electron-reloader": "^1.2.3",
+		"eslint": "^9.39.4",
+		"eslint-plugin-align-assignments": "^1.1.2",
+		"eslint-plugin-jsdoc": "^61.7.1",
+		"globals": "^16.5.0",
+		"prettier": "^3.9.5",
+		"typescript": "^5.8.3",
+		"typescript-eslint": "^8.32.1",
+		"vscode-css-languageservice": "^6.3.10"
+	}
+}

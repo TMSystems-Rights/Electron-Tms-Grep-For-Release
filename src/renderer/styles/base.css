@@ -1,0 +1,321 @@
+/* テーマ CSS 変数（ライトモード既定） */
+:root {
+	--tms-grep-color-bg: #f5f5f5;
+	--tms-grep-color-surface: #ffffff;
+	--tms-grep-color-border: #c8c8c8;
+	--tms-grep-color-text: #1a1a1a;
+	--tms-grep-color-text-muted: #555555;
+	--tms-grep-color-primary: #2563eb;
+	--tms-grep-color-primary-hover: #1d4ed8;
+	--tms-grep-color-danger: #dc2626;
+	--tms-grep-color-danger-hover: #b91c1c;
+	--tms-grep-color-focus-ring: #2563eb;
+	--tms-grep-color-warning-bg: #fef3c7;
+	--tms-grep-color-warning: #d97706;
+	--tms-grep-color-highlight-bg: #dbeafe;
+	--tms-grep-color-highlight: #2563eb;
+	--tms-grep-font-family: "Segoe UI", "Meiryo", sans-serif;
+	--tms-grep-font-mono: Consolas, "Cascadia Mono", "Meiryo UI", monospace;
+	--tms-grep-radius: 6px;
+	--tms-grep-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+	--tms-grep-titlebar-height: 48px;
+	--tms-grep-titlebar-active-bg: #ffffff;
+	--tms-grep-titlebar-active-text: #1a1a1a;
+	--tms-grep-titlebar-inactive-bg: #ffffff;
+	--tms-grep-titlebar-inactive-text: #555555;
+}
+
+body.tms-grep-theme-dark {
+	--tms-grep-color-bg: #1e1e1e;
+	--tms-grep-color-surface: #2d2d2d;
+	--tms-grep-color-border: #5a5a5a;
+	--tms-grep-color-text: #f0f0f0;
+	--tms-grep-color-text-muted: #bcbcbc;
+	--tms-grep-color-primary: #3b82f6;
+	--tms-grep-color-primary-hover: #60a5fa;
+	--tms-grep-color-danger: #ef4444;
+	--tms-grep-color-danger-hover: #f87171;
+	--tms-grep-color-focus-ring: #60a5fa;
+	--tms-grep-color-warning-bg: #422006;
+	--tms-grep-color-warning: #fbbf24;
+	--tms-grep-color-highlight-bg: #173963;
+	--tms-grep-color-highlight: #60a5fa;
+	--tms-grep-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+	--tms-grep-titlebar-active-bg: #2d2d2d;
+	--tms-grep-titlebar-active-text: #f0f0f0;
+	--tms-grep-titlebar-inactive-bg: #2d2d2d;
+	--tms-grep-titlebar-inactive-text: #bcbcbc;
+}
+
+body.tms-grep-theme-light {
+	--tms-grep-color-bg: #f5f5f5;
+	--tms-grep-color-surface: #ffffff;
+	--tms-grep-color-border: #c8c8c8;
+	--tms-grep-color-text: #1a1a1a;
+	--tms-grep-color-text-muted: #555555;
+	--tms-grep-color-warning-bg: #fef3c7;
+	--tms-grep-color-warning: #d97706;
+	--tms-grep-color-highlight-bg: #dbeafe;
+	--tms-grep-color-highlight: #2563eb;
+	--tms-grep-titlebar-active-bg: #ffffff;
+	--tms-grep-titlebar-active-text: #1a1a1a;
+	--tms-grep-titlebar-inactive-bg: #ffffff;
+	--tms-grep-titlebar-inactive-text: #555555;
+	color-scheme: light;
+}
+
+/* システム追従（OS ダーク時）— JS 適用前の白フラッシュを抑止 */
+@media (prefers-color-scheme: dark) {
+	body.tms-grep-body:not(.tms-grep-theme-light) {
+		--tms-grep-color-bg: #1e1e1e;
+		--tms-grep-color-surface: #2d2d2d;
+		--tms-grep-color-border: #5a5a5a;
+		--tms-grep-color-text: #f0f0f0;
+		--tms-grep-color-text-muted: #bcbcbc;
+		--tms-grep-color-primary: #3b82f6;
+		--tms-grep-color-primary-hover: #60a5fa;
+		--tms-grep-color-danger: #ef4444;
+		--tms-grep-color-danger-hover: #f87171;
+		--tms-grep-color-focus-ring: #60a5fa;
+		--tms-grep-color-warning-bg: #422006;
+		--tms-grep-color-warning: #fbbf24;
+		--tms-grep-color-highlight-bg: #173963;
+		--tms-grep-color-highlight: #60a5fa;
+		--tms-grep-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+		--tms-grep-titlebar-active-bg: #2d2d2d;
+		--tms-grep-titlebar-active-text: #f0f0f0;
+		--tms-grep-titlebar-inactive-bg: #2d2d2d;
+		--tms-grep-titlebar-inactive-text: #bcbcbc;
+		color-scheme: dark;
+	}
+}
+
+body.tms-grep-theme-dark {
+	color-scheme: dark;
+}
+
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+}
+
+[hidden] {
+	display: none !important;
+}
+
+html,
+body {
+	height: 100%;
+	margin: 0;
+}
+
+body.tms-grep-body {
+	font-family: var(--tms-grep-font-family);
+	font-size: 14px;
+	color: var(--tms-grep-color-text);
+	background-color: var(--tms-grep-color-bg);
+}
+
+.tms-grep-app {
+	display: flex;
+	flex-direction: column;
+	height: 100vh;
+	min-height: 560px;
+}
+
+.tms-grep-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	flex-shrink: 0;
+	box-sizing: border-box;
+	margin-left: env(titlebar-area-x, 0);
+	width: env(titlebar-area-width, 100%);
+	height: env(titlebar-area-height, var(--tms-grep-titlebar-height));
+	min-height: env(titlebar-area-height, var(--tms-grep-titlebar-height));
+	padding: 0 8px 0 16px;
+	color: var(--tms-grep-titlebar-inactive-text);
+	background-color: var(--tms-grep-titlebar-inactive-bg);
+	border-bottom: 1px solid color-mix(in srgb, var(--tms-grep-titlebar-inactive-text) 24%, transparent);
+	box-shadow: var(--tms-grep-shadow);
+	transition: background-color 0.15s, border-color 0.15s, color 0.15s;
+}
+
+body.tms-grep-window-focused .tms-grep-header {
+	color: var(--tms-grep-titlebar-active-text);
+	background-color: var(--tms-grep-titlebar-active-bg);
+	border-bottom-color: color-mix(in srgb, var(--tms-grep-titlebar-active-text) 24%, transparent);
+}
+
+.tms-grep-header__drag {
+	display: flex;
+	flex: 1;
+	align-items: center;
+	min-width: 0;
+	height: 100%;
+	user-select: none;
+	-webkit-app-region: drag;
+}
+
+.tms-grep-header .tms-grep-btn {
+	flex-shrink: 0;
+	color: inherit;
+	background-color: transparent;
+	border-color: color-mix(in srgb, currentColor 32%, transparent);
+	-webkit-app-region: no-drag;
+}
+
+.tms-grep-header .tms-grep-btn:hover:not(:disabled) {
+	background-color: color-mix(in srgb, currentColor 12%, transparent);
+	border-color: color-mix(in srgb, currentColor 48%, transparent);
+}
+
+.tms-grep-header__title {
+	margin: 0;
+	font-size: 16px;
+	font-weight: 600;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.tms-grep-main {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	padding: 12px 16px;
+	overflow: hidden;
+	gap: 12px;
+}
+
+.tms-grep-footer {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	flex-shrink: 0;
+	gap: 12px;
+	padding: 8px 16px;
+	font-size: 12px;
+	color: var(--tms-grep-color-text-muted);
+	background-color: var(--tms-grep-color-surface);
+	border-top: 1px solid var(--tms-grep-color-border);
+}
+
+.tms-grep-footer__status {
+	flex: 1;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.tms-grep-footer__copyright {
+	flex: 1;
+	text-align: center;
+}
+
+.tms-grep-footer__version {
+	flex-shrink: 0;
+}
+
+.tms-grep-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 4px;
+	padding: 6px 12px;
+	font-size: 13px;
+	font-family: inherit;
+	color: var(--tms-grep-color-text);
+	background-color: var(--tms-grep-color-surface);
+	border: 1px solid var(--tms-grep-color-border);
+	border-radius: var(--tms-grep-radius);
+	cursor: pointer;
+	transition: background-color 0.15s, border-color 0.15s;
+}
+
+.tms-grep-btn:hover:not(:disabled) {
+	background-color: var(--tms-grep-color-bg);
+}
+
+.tms-grep-btn:disabled {
+	opacity: 0.62;
+	cursor: not-allowed;
+}
+
+.tms-grep-btn:focus-visible {
+	outline: 2px solid var(--tms-grep-color-focus-ring);
+	outline-offset: 2px;
+}
+
+.tms-grep-btn--primary {
+	color: #ffffff;
+	background-color: var(--tms-grep-color-primary);
+	border-color: var(--tms-grep-color-primary);
+}
+
+.tms-grep-btn--primary:hover:not(:disabled) {
+	background-color: var(--tms-grep-color-primary-hover);
+	border-color: var(--tms-grep-color-primary-hover);
+}
+
+.tms-grep-btn--secondary {
+	font-size: 12px;
+}
+
+.tms-grep-btn--small {
+	padding: 4px 10px;
+	font-size: 12px;
+}
+
+.tms-grep-btn--icon {
+	font-size: 13px;
+}
+
+.tms-grep-form-row {
+	margin-bottom: 10px;
+}
+
+.tms-grep-form-row__label {
+	display: block;
+	margin-bottom: 4px;
+	font-size: 12px;
+	font-weight: 600;
+	color: var(--tms-grep-color-text-muted);
+}
+
+.tms-grep-form-row__input {
+	width: 100%;
+	padding: 6px 10px;
+	font: inherit;
+	font-size: 13px;
+	color: var(--tms-grep-color-text);
+	background: var(--tms-grep-color-surface);
+	border: 1px solid var(--tms-grep-color-border);
+	border-radius: var(--tms-grep-radius);
+}
+
+.tms-grep-form-row__input:focus-visible {
+	outline: 2px solid var(--tms-grep-color-focus-ring);
+	outline-offset: 1px;
+}
+
+.tms-grep-form-row__input:disabled {
+	opacity: 0.65;
+	cursor: not-allowed;
+}
+
+.tms-grep-toggle-label {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	flex-shrink: 0;
+	font-size: 12px;
+	color: var(--tms-grep-color-text-muted);
+	white-space: nowrap;
+}
+
+.tms-grep-toggle-label__input {
+	margin: 0;
+}

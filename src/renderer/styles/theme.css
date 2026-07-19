@@ -1,0 +1,60 @@
+/* テーマ拡張 — 高コントラスト・低モーション */
+
+@media (prefers-reduced-motion: reduce) {
+	.tms-grep-spinner {
+		animation: none;
+		border-top-color: var(--tms-grep-color-primary);
+		opacity: 0.85;
+	}
+
+	.tms-grep-toast {
+		animation: none;
+	}
+
+	.tms-grep-progress-panel__bar-fill {
+		transition: none;
+	}
+
+	.tms-grep-btn {
+		transition: none;
+	}
+}
+
+@media (prefers-contrast: more) {
+
+	:root,
+	body.tms-grep-theme-light {
+		--tms-grep-color-border: #767676;
+		--tms-grep-color-text-muted: #3d3d3d;
+		--tms-grep-color-focus-ring: #004578;
+	}
+
+	body.tms-grep-theme-dark,
+	body.tms-grep-body:not(.tms-grep-theme-light) {
+		--tms-grep-color-border: #8a8a8a;
+		--tms-grep-color-text-muted: #e0e0e0;
+		--tms-grep-color-focus-ring: #9ecbff;
+	}
+
+	.tms-grep-btn {
+		border-width: 2px;
+	}
+
+	.tms-grep-btn:focus-visible,
+	.tms-grep-form-row__input:focus-visible,
+	.tms-grep-form-row__select:focus-visible {
+		outline-width: 3px;
+	}
+
+	.tms-grep-toast--error {
+		background: color-mix(in srgb, var(--tms-grep-color-danger) 12%, var(--tms-grep-color-surface));
+	}
+
+	.tms-grep-toast--warn {
+		background: color-mix(in srgb, var(--tms-grep-color-warning) 14%, var(--tms-grep-color-surface));
+	}
+
+	.tms-grep-hit-mark {
+		font-weight: 600;
+	}
+}

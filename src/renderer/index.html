@@ -1,0 +1,508 @@
+<!doctype html>
+<html lang="ja">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'; img-src 'self' data:;" />
+		<title>TMS-GREP</title>
+		<link rel="stylesheet" href="styles/base.css" />
+		<link rel="stylesheet" href="styles/theme.css" />
+		<link rel="stylesheet" href="styles/main-view.css" />
+		<link rel="stylesheet" href="styles/modal.css" />
+	</head>
+	<body class="tms-grep-body">
+		<div id="tmsGrepApp" class="tms-grep-app">
+			<header id="tmsGrepHeader" class="tms-grep-header">
+				<div class="tms-grep-header__drag">
+					<h1 id="tmsGrepTitle" class="tms-grep-header__title">TMS-GREP</h1>
+				</div>
+				<button id="tmsGrepBtnSettings" class="tms-grep-btn tms-grep-btn--icon" type="button" title="設定" aria-label="設定">⚙ 設定</button>
+			</header>
+
+			<div id="tmsGrepEsWarning" class="tms-grep-es-warning" hidden role="alert">
+				<span id="tmsGrepEsWarningText">es.exe が見つかりません。</span>
+			</div>
+
+			<main id="tmsGrepMain" class="tms-grep-main">
+				<section id="tmsGrepSearchForm" class="tms-grep-search-form" aria-label="検索条件">
+					<div class="tms-grep-form-row">
+						<label class="tms-grep-form-row__label" for="tmsGrepFileNameQuery">ファイル名検索条件</label>
+						<div class="tms-grep-form-row__control">
+							<input id="tmsGrepFileNameQuery" class="tms-grep-form-row__input" type="text" placeholder="例: *.java" autocomplete="off" />
+							<label class="tms-grep-toggle-label" id="tmsGrepFileNameRegexLabel">
+								<input id="tmsGrepFileNameRegex" class="tms-grep-toggle-label__input" type="checkbox" />
+								<span id="tmsGrepFileNameRegexText">正規表現</span>
+							</label>
+						</div>
+					</div>
+					<p id="tmsGrepFileNameQueryError" class="tms-grep-form-row__error" hidden></p>
+
+					<div class="tms-grep-form-row">
+						<label class="tms-grep-form-row__label" for="tmsGrepTargetExtensions">対象拡張子</label>
+						<div class="tms-grep-form-row__control">
+							<input id="tmsGrepTargetExtensions" class="tms-grep-form-row__input" type="text" placeholder="複数指定はセミコロン「;」で区切って記載（例: txt;md;log）※未指定ならすべてのテキストファイルが対象" autocomplete="off" />
+						</div>
+					</div>
+
+					<div class="tms-grep-form-row">
+						<label class="tms-grep-form-row__label" for="tmsGrepContentQuery">ファイル内検索条件</label>
+						<div class="tms-grep-form-row__control">
+							<input id="tmsGrepContentQuery" class="tms-grep-form-row__input" type="text" placeholder="例: MyLogger.writeError" autocomplete="off" />
+							<label class="tms-grep-toggle-label" id="tmsGrepContentRegexLabel">
+								<input id="tmsGrepContentRegex" class="tms-grep-toggle-label__input" type="checkbox" />
+								<span id="tmsGrepContentRegexText">正規表現</span>
+							</label>
+						</div>
+					</div>
+
+					<p id="tmsGrepContentRegexError" class="tms-grep-form-row__error" hidden></p>
+
+					<div class="tms-grep-form-row">
+						<label class="tms-grep-form-row__label" for="tmsGrepTargetPath">対象フォルダ</label>
+						<div class="tms-grep-form-row__control tms-grep-form-row__control--path">
+							<input id="tmsGrepTargetPath" class="tms-grep-form-row__input" type="text" placeholder="任意。未指定なら Everything 全体" autocomplete="off" />
+							<button id="tmsGrepBtnBrowsePath" class="tms-grep-btn tms-grep-btn--small" type="button">参照</button>
+						</div>
+					</div>
+
+					<p class="tms-grep-search-form__hint">Ctrl+R / Ctrl+Shift+R で正規表現切替。ファイル名正規表現では | は使用不可</p>
+
+					<div class="tms-grep-search-form__actions">
+						<button id="tmsGrepBtnEsTest" class="tms-grep-btn tms-grep-btn--secondary" type="button" disabled>候補ファイル取得</button>
+						<button id="tmsGrepBtnSearch" class="tms-grep-btn tms-grep-btn--primary" type="button" disabled>全文検索</button>
+						<button id="tmsGrepBtnClear" class="tms-grep-btn" type="button">クリア</button>
+					</div>
+				</section>
+
+				<section id="tmsGrepProgressPanel" class="tms-grep-progress-panel" aria-label="進捗" role="status" aria-live="polite" hidden>
+					<div class="tms-grep-progress-panel__main">
+						<div id="tmsGrepProgressSpinner" class="tms-grep-spinner" aria-hidden="true"></div>
+						<div class="tms-grep-progress-panel__text">
+							<div id="tmsGrepProgressState" class="tms-grep-progress-panel__state">検索準備中…</div>
+							<div id="tmsGrepProgressSummary" class="tms-grep-progress-panel__summary">候補 0 件 / 検索済 0/0 件 / ヒット 0 件</div>
+						</div>
+					</div>
+					<div id="tmsGrepProgressBar" class="tms-grep-progress-panel__bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+						<div id="tmsGrepProgressBarFill" class="tms-grep-progress-panel__bar-fill"></div>
+					</div>
+					<button id="tmsGrepBtnCancel" class="tms-grep-btn tms-grep-btn--secondary" type="button" disabled>キャンセル</button>
+				</section>
+
+				<section id="tmsGrepResultsSection" class="tms-grep-results" aria-label="検索結果">
+					<div class="tms-grep-results__toolbar">
+						<button id="tmsGrepBtnCopyAll" class="tms-grep-btn tms-grep-btn--small" type="button" disabled>全結果コピー</button>
+						<button id="tmsGrepBtnCopySelected" class="tms-grep-btn tms-grep-btn--small" type="button" disabled>選択コピー</button>
+						<button id="tmsGrepBtnCopyPaths" class="tms-grep-btn tms-grep-btn--small" type="button" disabled>パス一覧コピー</button>
+						<label class="tms-grep-results__select-all">
+							<input id="tmsGrepSelectAll" class="tms-grep-results__select-all-input" type="checkbox" />
+							<span>全選択</span>
+						</label>
+					</div>
+					<div id="tmsGrepResultsBody" class="tms-grep-results__body">
+						<div id="tmsGrepResultsEmpty" class="tms-grep-results__empty">
+							<p>検索結果はここに表示されます。</p>
+						</div>
+						<div id="tmsGrepResultsContent" class="tms-grep-results__content" hidden>
+							<p id="tmsGrepEsResultSummary" class="tms-grep-results__summary" hidden></p>
+							<p id="tmsGrepSearchResultSummary" class="tms-grep-results__summary" hidden></p>
+							<div id="tmsGrepResultTableWrap" class="tms-grep-result-table-wrap">
+								<table id="tmsGrepResultTable" class="tms-grep-result-table" aria-label="検索結果一覧">
+									<colgroup>
+										<col data-col-key="select" style="width: 40px" />
+										<col data-col-key="no" style="width: 48px" />
+										<col data-col-key="path" style="width: 360px" />
+										<col data-col-key="line-num" style="width: 56px" />
+										<col data-col-key="column-num" style="width: 56px" />
+										<col data-col-key="hit-count" style="width: 64px" />
+										<col data-col-key="line" style="width: 420px" />
+										<col data-col-key="actions" style="width: 220px" />
+									</colgroup>
+									<thead>
+										<tr>
+											<th scope="col" class="tms-grep-result-table__head tms-grep-result-table__head--select" data-col-key="select">選択</th>
+											<th scope="col" class="tms-grep-result-table__head tms-grep-result-table__head--no tms-grep-result-table__head--resizable" data-col-key="no">
+												<span class="tms-grep-result-table__head-label">No</span>
+												<span class="tms-grep-result-table__col-resizer" aria-hidden="true"></span>
+											</th>
+											<th scope="col" class="tms-grep-result-table__head tms-grep-result-table__head--path tms-grep-result-table__head--resizable" data-col-key="path">
+												<span class="tms-grep-result-table__head-label">ファイル</span>
+												<span class="tms-grep-result-table__col-resizer" aria-hidden="true"></span>
+											</th>
+											<th scope="col" class="tms-grep-result-table__head tms-grep-result-table__head--num tms-grep-result-table__head--resizable" data-col-key="line-num">
+												<span class="tms-grep-result-table__head-label">行</span>
+												<span class="tms-grep-result-table__col-resizer" aria-hidden="true"></span>
+											</th>
+											<th scope="col" class="tms-grep-result-table__head tms-grep-result-table__head--num tms-grep-result-table__head--resizable" data-col-key="column-num">
+												<span class="tms-grep-result-table__head-label">列</span>
+												<span class="tms-grep-result-table__col-resizer" aria-hidden="true"></span>
+											</th>
+											<th scope="col" class="tms-grep-result-table__head tms-grep-result-table__head--num tms-grep-result-table__head--resizable" data-col-key="hit-count">
+												<span class="tms-grep-result-table__head-label">ヒット数</span>
+												<span class="tms-grep-result-table__col-resizer" aria-hidden="true"></span>
+											</th>
+											<th scope="col" class="tms-grep-result-table__head tms-grep-result-table__head--line tms-grep-result-table__head--resizable" data-col-key="line">
+												<span class="tms-grep-result-table__head-label">該当行</span>
+												<span class="tms-grep-result-table__col-resizer" aria-hidden="true"></span>
+											</th>
+											<th scope="col" class="tms-grep-result-table__head tms-grep-result-table__head--actions" data-col-key="actions">操作</th>
+										</tr>
+									</thead>
+									<tbody id="tmsGrepResultTableBody"></tbody>
+								</table>
+							</div>
+						</div>
+					</div>
+				</section>
+			</main>
+
+			<footer id="tmsGrepFooter" class="tms-grep-footer">
+				<span id="tmsGrepStatus" class="tms-grep-footer__status">準備完了</span>
+				<span id="tmsGrepCopyright" class="tms-grep-footer__copyright">© 2026 TMSystems. All rights reserved.</span>
+				<span id="tmsGrepVersion" class="tms-grep-footer__version">v1.0.0</span>
+			</footer>
+		</div>
+
+		<div id="tmsGrepToastContainer" class="tms-grep-toast-container" aria-live="polite"></div>
+
+		<div id="tmsGrepModalSettings" class="tms-grep-modal" hidden>
+			<div id="tmsGrepModalSettingsBackdrop" class="tms-grep-modal__backdrop"></div>
+			<div class="tms-grep-modal__dialog tms-grep-modal__dialog--settings" role="dialog" aria-modal="true" aria-labelledby="tmsGrepSettingsTitle">
+				<h2 id="tmsGrepSettingsTitle" class="tms-grep-modal__title">設定</h2>
+				<p id="tmsGrepSettingsSaveStatus" class="tms-grep-settings__status tms-grep-settings__save-status tms-grep-settings__status--warn" hidden></p>
+
+				<section class="tms-grep-settings__section" aria-label="外観">
+					<h3 class="tms-grep-settings__section-title">外観</h3>
+					<div class="tms-grep-form-row">
+						<label class="tms-grep-form-row__label" for="tmsGrepSettingsTheme">テーマ</label>
+						<div class="tms-grep-form-row__control-row">
+							<select id="tmsGrepSettingsTheme" class="tms-grep-form-row__select">
+								<option value="system">システムに従う</option>
+								<option value="dark">ダーク</option>
+								<option value="light">ライト</option>
+							</select>
+							<button class="tms-grep-btn tms-grep-btn--small" type="button" data-settings-reset="theme">リセット</button>
+						</div>
+					</div>
+				</section>
+
+				<section class="tms-grep-settings__section" aria-label="全般">
+					<h3 class="tms-grep-settings__section-title">全般</h3>
+					<div class="tms-grep-form-row">
+						<label class="tms-grep-settings__checkbox-row" for="tmsGrepSettingsConfirmBeforeSearch">
+							<input id="tmsGrepSettingsConfirmBeforeSearch" type="checkbox" />
+							<span>全文検索前に確認ダイアログを表示する</span>
+						</label>
+						<button class="tms-grep-btn tms-grep-btn--small tms-grep-settings__inline-reset" type="button" data-settings-reset="confirmBeforeSearch">リセット</button>
+					</div>
+					<div class="tms-grep-form-row">
+						<label class="tms-grep-settings__checkbox-row" for="tmsGrepSettingsRestoreLastSearch">
+							<input id="tmsGrepSettingsRestoreLastSearch" type="checkbox" />
+							<span>前回の検索条件を起動時に復元する</span>
+						</label>
+						<button class="tms-grep-btn tms-grep-btn--small tms-grep-settings__inline-reset" type="button" data-settings-reset="restoreLastSearch">リセット</button>
+					</div>
+					<div class="tms-grep-form-row">
+						<span class="tms-grep-form-row__label">アプリ更新</span>
+						<div class="tms-grep-form-row__control-row">
+							<button id="tmsGrepBtnSettingsCheckUpdate" class="tms-grep-btn tms-grep-btn--small" type="button">更新を確認</button>
+						</div>
+					</div>
+				</section>
+
+				<section class="tms-grep-settings__section" aria-label="es.exe">
+					<h3 class="tms-grep-settings__section-title">es.exe（ファイル名検索）</h3>
+					<div class="tms-grep-form-row">
+						<label class="tms-grep-form-row__label" for="tmsGrepSettingsEsExePath">es.exe パス</label>
+						<div class="tms-grep-form-row__path-row">
+							<input id="tmsGrepSettingsEsExePath" class="tms-grep-form-row__input" type="text" autocomplete="off" spellcheck="false" placeholder="空欄なら自動検出" />
+							<button id="tmsGrepBtnSettingsBrowseEsExe" class="tms-grep-btn tms-grep-btn--small" type="button">参照</button>
+							<button class="tms-grep-btn tms-grep-btn--small" type="button" data-settings-reset="esExePath">リセット</button>
+						</div>
+						<p id="tmsGrepSettingsEsDetectStatus" class="tms-grep-settings__status"></p>
+					</div>
+					<div class="tms-grep-form-row">
+						<label class="tms-grep-settings__checkbox-row" for="tmsGrepSettingsFileNameCaseSensitive">
+							<input id="tmsGrepSettingsFileNameCaseSensitive" type="checkbox" />
+							<span>大文字小文字を区別する</span>
+						</label>
+						<button class="tms-grep-btn tms-grep-btn--small tms-grep-settings__inline-reset" type="button" data-settings-reset="fileNameSearch.caseSensitive">リセット</button>
+					</div>
+					<div class="tms-grep-form-row">
+						<label class="tms-grep-settings__checkbox-row" for="tmsGrepSettingsFileNameWholeWord">
+							<input id="tmsGrepSettingsFileNameWholeWord" type="checkbox" />
+							<span>単語一致</span>
+						</label>
+						<button class="tms-grep-btn tms-grep-btn--small tms-grep-settings__inline-reset" type="button" data-settings-reset="fileNameSearch.wholeWord">リセット</button>
+					</div>
+					<div class="tms-grep-form-row">
+						<label class="tms-grep-settings__checkbox-row" for="tmsGrepSettingsFileNameMatchPath">
+							<input id="tmsGrepSettingsFileNameMatchPath" type="checkbox" />
+							<span>パスも検索対象に含める</span>
+						</label>
+						<button class="tms-grep-btn tms-grep-btn--small tms-grep-settings__inline-reset" type="button" data-settings-reset="fileNameSearch.matchPath">リセット</button>
+					</div>
+					<div class="tms-grep-form-row">
+						<label class="tms-grep-settings__checkbox-row" for="tmsGrepSettingsFileNameDiacritics">
+							<input id="tmsGrepSettingsFileNameDiacritics" type="checkbox" />
+							<span>発音記号を区別する</span>
+						</label>
+						<button class="tms-grep-btn tms-grep-btn--small tms-grep-settings__inline-reset" type="button" data-settings-reset="fileNameSearch.diacritics">リセット</button>
+					</div>
+					<div class="tms-grep-form-row tms-grep-form-row--stacked">
+						<label class="tms-grep-form-row__label" for="tmsGrepSettingsMaxCandidateFiles">候補ファイル上限</label>
+						<p class="tms-grep-settings__field-desc">0 で上限なし。件数が多いと候補取得・全文検索に時間がかかります。</p>
+						<div class="tms-grep-form-row__control-row">
+							<input id="tmsGrepSettingsMaxCandidateFiles" class="tms-grep-form-row__input tms-grep-settings__number" type="number" min="0" max="100000" step="1" />
+							<button class="tms-grep-btn tms-grep-btn--small" type="button" data-settings-reset="fileNameSearch.maxCandidateFiles">リセット</button>
+						</div>
+					</div>
+					<div class="tms-grep-form-row">
+						<label class="tms-grep-form-row__label" for="tmsGrepSettingsFileNameSort">ソート順</label>
+						<div class="tms-grep-form-row__control-row">
+							<select id="tmsGrepSettingsFileNameSort" class="tms-grep-form-row__select">
+								<option value="path-ascending">パス昇順</option>
+								<option value="path-descending">パス降順</option>
+								<option value="name-ascending">名前昇順</option>
+								<option value="name-descending">名前降順</option>
+								<option value="size-ascending">サイズ昇順</option>
+								<option value="size-descending">サイズ降順</option>
+								<option value="date-modified-ascending">更新日時昇順</option>
+								<option value="date-modified-descending">更新日時降順</option>
+							</select>
+							<button class="tms-grep-btn tms-grep-btn--small" type="button" data-settings-reset="fileNameSearch.sort">リセット</button>
+						</div>
+					</div>
+					<div class="tms-grep-form-row">
+						<label class="tms-grep-form-row__label" for="tmsGrepSettingsFileNameTimeoutMs">タイムアウト（ms）</label>
+						<div class="tms-grep-form-row__control-row">
+							<input id="tmsGrepSettingsFileNameTimeoutMs" class="tms-grep-form-row__input tms-grep-settings__number" type="number" min="1000" max="300000" step="1000" />
+							<button class="tms-grep-btn tms-grep-btn--small" type="button" data-settings-reset="fileNameSearch.timeoutMs">リセット</button>
+						</div>
+					</div>
+					<div class="tms-grep-form-row">
+						<label class="tms-grep-form-row__label" for="tmsGrepSettingsAdditionalArgs">追加オプション</label>
+						<div class="tms-grep-form-row__control-row">
+							<input id="tmsGrepSettingsAdditionalArgs" class="tms-grep-form-row__input" type="text" autocomplete="off" spellcheck="false" placeholder="例: -size:1mb..10mb" />
+							<button class="tms-grep-btn tms-grep-btn--small" type="button" data-settings-reset="fileNameSearch.additionalArgs">リセット</button>
+						</div>
+						<p id="tmsGrepSettingsAdditionalArgsError" class="tms-grep-settings__error" hidden></p>
+					</div>
+				</section>
+
+				<section class="tms-grep-settings__section" aria-label="本文検索">
+					<h3 class="tms-grep-settings__section-title">本文検索</h3>
+					<div class="tms-grep-form-row">
+						<label class="tms-grep-settings__checkbox-row" for="tmsGrepSettingsContentCaseSensitive">
+							<input id="tmsGrepSettingsContentCaseSensitive" type="checkbox" />
+							<span>大文字小文字を区別する</span>
+						</label>
+						<button class="tms-grep-btn tms-grep-btn--small tms-grep-settings__inline-reset" type="button" data-settings-reset="contentSearch.caseSensitive">リセット</button>
+					</div>
+					<div class="tms-grep-form-row">
+						<label class="tms-grep-form-row__label" for="tmsGrepSettingsContentEncoding">文字コード</label>
+						<div class="tms-grep-form-row__control-row">
+							<select id="tmsGrepSettingsContentEncoding" class="tms-grep-form-row__select">
+								<option value="auto">自動判定</option>
+								<option value="utf8">UTF-8</option>
+								<option value="utf16le">UTF-16 LE</option>
+								<option value="utf16be">UTF-16 BE</option>
+								<option value="cp932">CP932 (Shift_JIS)</option>
+							</select>
+							<button class="tms-grep-btn tms-grep-btn--small" type="button" data-settings-reset="contentSearch.encoding">リセット</button>
+						</div>
+					</div>
+					<div class="tms-grep-form-row">
+						<label class="tms-grep-form-row__label" for="tmsGrepSettingsMaxFileSizeMb">最大ファイルサイズ（MB）</label>
+						<div class="tms-grep-form-row__control-row">
+							<input id="tmsGrepSettingsMaxFileSizeMb" class="tms-grep-form-row__input tms-grep-settings__number" type="number" min="1" max="1024" step="1" />
+							<button class="tms-grep-btn tms-grep-btn--small" type="button" data-settings-reset="contentSearch.maxFileSizeMb">リセット</button>
+						</div>
+					</div>
+					<div class="tms-grep-form-row">
+						<label class="tms-grep-settings__checkbox-row" for="tmsGrepSettingsSkipBinary">
+							<input id="tmsGrepSettingsSkipBinary" type="checkbox" />
+							<span>バイナリファイルをスキップする</span>
+						</label>
+						<button class="tms-grep-btn tms-grep-btn--small tms-grep-settings__inline-reset" type="button" data-settings-reset="contentSearch.skipBinary">リセット</button>
+					</div>
+					<div class="tms-grep-form-row">
+						<label class="tms-grep-form-row__label" for="tmsGrepSettingsConcurrency">並列数</label>
+						<div class="tms-grep-form-row__control-row">
+							<input id="tmsGrepSettingsConcurrency" class="tms-grep-form-row__input tms-grep-settings__number" type="number" min="1" max="32" step="1" />
+							<button class="tms-grep-btn tms-grep-btn--small" type="button" data-settings-reset="contentSearch.concurrency">リセット</button>
+						</div>
+					</div>
+				</section>
+
+				<section class="tms-grep-settings__section" aria-label="結果表示">
+					<h3 class="tms-grep-settings__section-title">結果表示</h3>
+					<div class="tms-grep-form-row tms-grep-form-row--stacked">
+						<label class="tms-grep-form-row__label" for="tmsGrepSettingsMaxRows">最大表示行数</label>
+						<p class="tms-grep-settings__field-desc">0 で上限なし。件数が多いと全文検索に時間がかかります。</p>
+						<div class="tms-grep-form-row__control-row">
+							<input id="tmsGrepSettingsMaxRows" class="tms-grep-form-row__input tms-grep-settings__number" type="number" min="0" max="1000000" step="1" />
+							<button class="tms-grep-btn tms-grep-btn--small" type="button" data-settings-reset="results.maxRows">リセット</button>
+						</div>
+					</div>
+					<div class="tms-grep-form-row">
+						<label class="tms-grep-form-row__label" for="tmsGrepSettingsCopyFormat">コピー形式</label>
+						<div class="tms-grep-form-row__control-row">
+							<select id="tmsGrepSettingsCopyFormat" class="tms-grep-form-row__select">
+								<option value="grep">grep 形式</option>
+								<option value="tsv">TSV</option>
+								<option value="markdown-codeblock">Markdown（コードブロック）</option>
+								<option value="markdown-table">Markdown（テーブル形式）</option>
+								<option value="markdown-table-aligned">Markdown（桁揃えテーブル形式）</option>
+								<option value="paths">パスのみ</option>
+							</select>
+							<button class="tms-grep-btn tms-grep-btn--small" type="button" data-settings-reset="results.copyFormat">リセット</button>
+						</div>
+					</div>
+					<div class="tms-grep-form-row">
+						<label class="tms-grep-form-row__label" for="tmsGrepSettingsCopyLineEnding">コピー時の改行コード</label>
+						<div class="tms-grep-form-row__control-row">
+							<select id="tmsGrepSettingsCopyLineEnding" class="tms-grep-form-row__select">
+								<option value="crlf">CRLF (Windows)</option>
+								<option value="cr">CR</option>
+								<option value="lf">LF</option>
+							</select>
+							<button class="tms-grep-btn tms-grep-btn--small" type="button" data-settings-reset="results.copyLineEnding">リセット</button>
+						</div>
+					</div>
+				</section>
+
+				<section class="tms-grep-settings__section" aria-label="タブ文字の扱い">
+					<h3 class="tms-grep-settings__section-title">タブ文字の扱い</h3>
+					<div class="tms-grep-form-row">
+						<label class="tms-grep-form-row__label" for="tmsGrepSettingsTabHandling">タブ文字</label>
+						<div class="tms-grep-form-row__control-row">
+							<select id="tmsGrepSettingsTabHandling" class="tms-grep-form-row__select">
+								<option value="preserve">そのまま出力</option>
+								<option value="replace-all">すべてのタブ文字を半角空白に置換</option>
+								<option value="replace-indent">インデント、末尾のタブ文字を半角空白に置換</option>
+							</select>
+							<button class="tms-grep-btn tms-grep-btn--small" type="button" data-settings-reset="results.tabHandling">リセット</button>
+						</div>
+					</div>
+					<div id="tmsGrepSettingsTabSizeRow" class="tms-grep-form-row tms-grep-form-row--stacked">
+						<label class="tms-grep-form-row__label" for="tmsGrepSettingsTabSize">タブサイズ</label>
+						<p class="tms-grep-settings__field-desc">1 つのタブ文字に相当する半角空白の数。</p>
+						<div class="tms-grep-form-row__control-row">
+							<input id="tmsGrepSettingsTabSize" class="tms-grep-form-row__input tms-grep-settings__number" type="number" min="1" max="8" step="1" />
+							<button class="tms-grep-btn tms-grep-btn--small" type="button" data-settings-reset="results.tabSize">リセット</button>
+						</div>
+					</div>
+					<div class="tms-grep-form-row">
+						<label class="tms-grep-settings__checkbox-row" for="tmsGrepSettingsTrimLineText">
+							<input id="tmsGrepSettingsTrimLineText" type="checkbox" />
+							<span>行頭・行末の半角空白・全角空白・タブ文字を除去する</span>
+						</label>
+						<button class="tms-grep-btn tms-grep-btn--small tms-grep-settings__inline-reset" type="button" data-settings-reset="results.trimLineText">リセット</button>
+					</div>
+				</section>
+
+				<section class="tms-grep-settings__section" aria-label="キーボード">
+					<h3 class="tms-grep-settings__section-title">キーボード</h3>
+					<p class="tms-grep-settings__hint">ショートカット欄をクリックし、割り当てたいキーを押してください。記録中は Esc でキャンセルできます。</p>
+					<div class="tms-grep-form-row">
+						<span class="tms-grep-form-row__label">ファイル名正規表現切替</span>
+						<div class="tms-grep-form-row__control-row">
+							<button id="tmsGrepSettingsKbToggleFileNameRegex" class="tms-grep-settings__shortcut" type="button" data-shortcut-capture="keybindings.toggleFileNameRegex">Ctrl+R</button>
+							<button class="tms-grep-btn tms-grep-btn--small" type="button" data-settings-reset="keybindings.toggleFileNameRegex">リセット</button>
+						</div>
+					</div>
+					<div class="tms-grep-form-row">
+						<span class="tms-grep-form-row__label">本文正規表現切替</span>
+						<div class="tms-grep-form-row__control-row">
+							<button id="tmsGrepSettingsKbToggleContentRegex" class="tms-grep-settings__shortcut" type="button" data-shortcut-capture="keybindings.toggleContentRegex">Ctrl+Shift+R</button>
+							<button class="tms-grep-btn tms-grep-btn--small" type="button" data-settings-reset="keybindings.toggleContentRegex">リセット</button>
+						</div>
+					</div>
+					<div class="tms-grep-form-row">
+						<span class="tms-grep-form-row__label">全文検索実行</span>
+						<div class="tms-grep-form-row__control-row">
+							<button id="tmsGrepSettingsKbRunSearch" class="tms-grep-settings__shortcut" type="button" data-shortcut-capture="keybindings.runSearch">Ctrl+Enter</button>
+							<button class="tms-grep-btn tms-grep-btn--small" type="button" data-settings-reset="keybindings.runSearch">リセット</button>
+						</div>
+					</div>
+					<div class="tms-grep-form-row tms-grep-form-row--stacked">
+						<span class="tms-grep-form-row__label">検索条件・結果のクリア</span>
+						<p class="tms-grep-settings__field-desc">検索条件入力項目と結果一覧を初期状態に戻します（「クリア」ボタンと同じ操作）。</p>
+						<div class="tms-grep-form-row__control-row">
+							<button id="tmsGrepSettingsKbClear" class="tms-grep-settings__shortcut" type="button" data-shortcut-capture="keybindings.clear">Ctrl+Shift+C</button>
+							<button class="tms-grep-btn tms-grep-btn--small" type="button" data-settings-reset="keybindings.clear">リセット</button>
+						</div>
+					</div>
+				</section>
+
+				<div class="tms-grep-modal__actions tms-grep-modal__actions--settings">
+					<button id="tmsGrepBtnSettingsResetAll" class="tms-grep-btn tms-grep-btn--secondary" type="button">すべてリセット</button>
+					<button id="tmsGrepBtnSettingsClose" class="tms-grep-btn tms-grep-btn--primary" type="button">閉じる</button>
+				</div>
+			</div>
+		</div>
+
+		<div id="tmsGrepModalConfirm" class="tms-grep-modal" hidden>
+			<div id="tmsGrepModalConfirmBackdrop" class="tms-grep-modal__backdrop"></div>
+			<div class="tms-grep-modal__dialog tms-grep-modal__dialog--confirm" role="dialog" aria-modal="true" aria-labelledby="tmsGrepConfirmTitle">
+				<h2 id="tmsGrepConfirmTitle" class="tms-grep-modal__title">全文検索の確認</h2>
+				<p class="tms-grep-modal__message">以下の条件で全文検索します。よろしいですか？</p>
+				<dl class="tms-grep-confirm-summary">
+					<div class="tms-grep-confirm-summary__row">
+						<dt>ファイル名検索条件</dt>
+						<dd id="tmsGrepConfirmFileNameQuery"></dd>
+					</div>
+					<div class="tms-grep-confirm-summary__row">
+						<dt>ファイル名検索モード</dt>
+						<dd id="tmsGrepConfirmFileNameMode"></dd>
+					</div>
+					<div class="tms-grep-confirm-summary__row">
+						<dt>対象拡張子</dt>
+						<dd id="tmsGrepConfirmTargetExtensions"></dd>
+					</div>
+					<div class="tms-grep-confirm-summary__row">
+						<dt>ファイル内検索条件</dt>
+						<dd id="tmsGrepConfirmContentQuery"></dd>
+					</div>
+					<div class="tms-grep-confirm-summary__row">
+						<dt>ファイル内検索モード</dt>
+						<dd id="tmsGrepConfirmContentMode"></dd>
+					</div>
+					<div class="tms-grep-confirm-summary__row">
+						<dt>対象フォルダ</dt>
+						<dd id="tmsGrepConfirmTargetPath"></dd>
+					</div>
+					<div class="tms-grep-confirm-summary__row">
+						<dt>ファイル名の大文字小文字</dt>
+						<dd id="tmsGrepConfirmFileNameCase"></dd>
+					</div>
+					<div class="tms-grep-confirm-summary__row">
+						<dt>ファイル内の大文字小文字</dt>
+						<dd id="tmsGrepConfirmContentCase"></dd>
+					</div>
+					<div class="tms-grep-confirm-summary__row">
+						<dt>候補ファイル上限</dt>
+						<dd id="tmsGrepConfirmMaxCandidates"></dd>
+					</div>
+					<div class="tms-grep-confirm-summary__row">
+						<dt>最大表示行数</dt>
+						<dd id="tmsGrepConfirmMaxRows"></dd>
+					</div>
+				</dl>
+				<p class="tms-grep-modal__hint">Esc でキャンセル</p>
+				<div class="tms-grep-modal__actions">
+					<button id="tmsGrepConfirmNo" class="tms-grep-btn" type="button">キャンセル</button>
+					<button id="tmsGrepConfirmYes" class="tms-grep-btn tms-grep-btn--primary" type="button">はい</button>
+				</div>
+			</div>
+		</div>
+
+		<script src="common/tms_common.js"></script>
+		<script src="confirm-dialog.js"></script>
+		<script src="settings-dialog.js"></script>
+		<script src="keyboard.js"></script>
+		<script src="results.js"></script>
+		<script src="search.js"></script>
+		<script src="app.js"></script>
+	</body>
+</html>
