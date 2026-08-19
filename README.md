@@ -4,7 +4,7 @@ Everything Search（`es.exe`）によるファイル名検索と、ファイル�
 
 リポジトリ: [TMSystems-Rights/Electron-Tms-Grep-For-Release](https://github.com/TMSystems-Rights/Electron-Tms-Grep-For-Release)
 
-最新リリース: [v1.2.0](https://github.com/TMSystems-Rights/Electron-Tms-Grep-For-Release/releases/tag/v1.2.0)
+最新リリース: [v1.2.1](https://github.com/TMSystems-Rights/Electron-Tms-Grep-For-Release/releases/tag/v1.2.1)
 
 ## v1.0.0 の主な機能
 
@@ -111,7 +111,7 @@ npm run test
 npm run dist
 ```
 
-出力先: `release/<version>/TmsGrep-<version>-setup.exe`（例: `release/1.2.0/TmsGrep-1.2.0-setup.exe`）
+出力先: `release/<version>/TmsGrep-<version>-setup.exe`（例: `release/1.2.1/TmsGrep-1.2.1-setup.exe`）
 
 `npm run dist` / `npm run dist:publish` 実行前に、`scripts/ensure-dist-ready.ps1` が `app.asar` の**上書き可否**（rename テスト）を検査します。問題があればビルド開始前に中止します（ファイルの削除は行いません）。
 
