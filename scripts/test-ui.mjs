@@ -80,6 +80,8 @@ app.whenReady().then(async () => {
 			progressHidden: progressPanel?.hidden === true,
 			progressHasStateText: Boolean(progressState?.textContent),
 			excludeInputExists: excludeInput instanceof HTMLInputElement,
+			folderPlaceholdersUnified: targetInput?.placeholder === '任意。カンマ区切り・環境変数・ワイルドカード対応。例：C:\\\\tmp, "C:\\\\Program Files (x86)"'
+				&& excludeInput?.placeholder === targetInput?.placeholder,
 		};
 
 		fileNameInput.value = '*.java';
@@ -154,6 +156,7 @@ app.whenReady().then(async () => {
 		&& result.initial.progressHidden
 		&& result.initial.progressHasStateText
 		&& result.initial.excludeInputExists
+		&& result.initial.folderPlaceholdersUnified
 		&& result.filled.searchEnabled
 		&& result.filled.folderValuesIncluded
 		&& result.esMissing.searchDisabled
