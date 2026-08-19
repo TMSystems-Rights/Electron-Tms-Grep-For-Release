@@ -103,6 +103,7 @@ export interface LastSearch {
 	fileNameQuery: string;
 	contentQuery: string;
 	targetPath: string;
+	excludePath: string;
 	targetExtensions: string;
 	fileNameRegex: boolean;
 	contentRegex: boolean;
@@ -150,6 +151,7 @@ export interface EsSearchRequest {
 	esExePath: string;
 	fileNameQuery: string;
 	targetPath?: string;
+	excludePath?: string;
 	targetExtensions?: string;
 	regex: boolean;
 	caseSensitive: boolean;
@@ -260,6 +262,7 @@ export interface SearchStartPayload {
 	fileNameQuery: string;
 	contentQuery: string;
 	targetPath?: string;
+	excludePath?: string;
 	targetExtensions?: string;
 	fileNameRegex?: boolean;
 	contentRegex?: boolean;

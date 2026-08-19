@@ -81,6 +81,7 @@ app.whenReady().then(() => {
 			fileNameQuery    : '*.java',
 			contentQuery     : 'MyLogger',
 			targetPath       : 'D:\\src',
+			excludePath      : 'D:\\src\\tmp, %TEMP%\\cache',
 			targetExtensions : 'java;ts',
 			fileNameRegex    : true,
 			contentRegex     : false,
@@ -89,6 +90,7 @@ app.whenReady().then(() => {
 		assert.equal(lastSearchResult.success, true);
 		assert.equal(lastSearchResult.config?.lastSearch.fileNameQuery, '*.java');
 		assert.equal(lastSearchResult.config?.lastSearch.contentQuery, 'MyLogger');
+		assert.equal(lastSearchResult.config?.lastSearch.excludePath, 'D:\\src\\tmp, %TEMP%\\cache');
 		assert.equal(lastSearchResult.config?.lastSearch.targetExtensions, 'java;ts');
 		assert.equal(lastSearchResult.config?.lastSearch.fileNameRegex, true);
 		assert.equal(lastSearchResult.config?.lastSearch.contentRegex, false);

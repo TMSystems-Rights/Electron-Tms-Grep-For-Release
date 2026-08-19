@@ -202,6 +202,7 @@ const grepApi = {
 	searchEsCandidates: (payload: {
 		fileNameQuery: string;
 		targetPath?: string;
+		excludePath?: string;
 		targetExtensions?: string;
 		regex?: boolean;
 	}) => ipcRenderer.invoke('es:search', payload),

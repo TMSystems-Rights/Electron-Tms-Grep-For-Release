@@ -87,6 +87,7 @@ Object.assign(TMS_GREP.Confirm, {
 			contentQuery   : document.getElementById('tmsGrepConfirmContentQuery'),
 			contentMode    : document.getElementById('tmsGrepConfirmContentMode'),
 			targetPath     : document.getElementById('tmsGrepConfirmTargetPath'),
+			excludePath    : document.getElementById('tmsGrepConfirmExcludePath'),
 			fileNameCase   : document.getElementById('tmsGrepConfirmFileNameCase'),
 			contentCase    : document.getElementById('tmsGrepConfirmContentCase'),
 			maxCandidates  : document.getElementById('tmsGrepConfirmMaxCandidates'),
@@ -115,6 +116,10 @@ Object.assign(TMS_GREP.Confirm, {
 
 		if (fields.targetPath) {
 			fields.targetPath.textContent = summary.targetPath || 'Everything 全体';
+		}
+
+		if (fields.excludePath) {
+			fields.excludePath.textContent = summary.excludePath || '未指定';
 		}
 
 		if (fields.fileNameCase) {

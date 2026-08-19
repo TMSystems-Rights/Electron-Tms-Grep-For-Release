@@ -8,6 +8,7 @@ import {
 } from './es-adapter';
 import { searchInFiles, validateContentRegex } from './content-search';
 import { updateLastSearch } from './config-store';
+import { hasFolderWildcard, parseFolderPathList } from './folder-path-filter';
 import { logger } from './logger';
 import { validateRegexPattern } from './regex-validation';
 import type {
@@ -123,8 +124,9 @@ export function validateSearchStartPayload(
 ): { valid: boolean; message?: string } {
 	const fileNameQuery = payload.fileNameQuery?.trim() ?? '';
 	const contentQuery  = payload.contentQuery?.trim() ?? '';
-	const targetPath    = payload.targetPath?.trim() ?? '';
 	const extensions    = normalizeTargetExtensions(payload.targetExtensions);
+	const targetPaths   = parseFolderPathList(payload.targetPath, '対象フォルダ');
+	const excludePaths  = parseFolderPathList(payload.excludePath, '除外フォルダ');
 
 	if (trimmedContentLength(fileNameQuery) <= 0) {
 		return {
@@ -144,6 +146,20 @@ export function validateSearchStartPayload(
 		return {
 			valid  : false,
 			message: extensions.message,
+		};
+	}
+
+	if (!targetPaths.valid) {
+		return {
+			valid  : false,
+			message: targetPaths.message,
+		};
+	}
+
+	if (!excludePaths.valid) {
+		return {
+			valid  : false,
+			message: excludePaths.message,
 		};
 	}
 
@@ -170,18 +186,24 @@ export function validateSearchStartPayload(
 		}
 	}
 
-	if (targetPath && !fs.existsSync(targetPath)) {
-		return {
-			valid  : false,
-			message: `対象フォルダが存在しません: ${targetPath}`,
-		};
-	}
+	for (const targetPath of targetPaths.values) {
+		if (hasFolderWildcard(targetPath)) {
+			continue;
+		}
 
-	if (targetPath && fs.existsSync(targetPath) && !fs.statSync(targetPath).isDirectory()) {
-		return {
-			valid  : false,
-			message: `対象フォルダはディレクトリである必要があります: ${targetPath}`,
-		};
+		if (!fs.existsSync(targetPath)) {
+			return {
+				valid  : false,
+				message: `対象フォルダが存在しません: ${targetPath}`,
+			};
+		}
+
+		if (!fs.statSync(targetPath).isDirectory()) {
+			return {
+				valid  : false,
+				message: `対象フォルダはディレクトリである必要があります: ${targetPath}`,
+			};
+		}
 	}
 
 	return { valid: true };
@@ -352,6 +374,7 @@ export async function startSearchJob(params: {
 		esExePath     : detect.path,
 		fileNameQuery : payload.fileNameQuery.trim(),
 		targetPath    : payload.targetPath?.trim() || undefined,
+		excludePath   : payload.excludePath?.trim() || undefined,
 		targetExtensions: payload.targetExtensions?.trim() || undefined,
 		regex         : payload.fileNameRegex ?? false,
 		fileNameSearch: config.settings.fileNameSearch,
@@ -493,6 +516,7 @@ export async function startSearchJob(params: {
 			fileNameQuery: payload.fileNameQuery.trim(),
 			contentQuery : payload.contentQuery.trim(),
 			targetPath   : payload.targetPath?.trim() ?? '',
+			excludePath  : payload.excludePath?.trim() ?? '',
 			targetExtensions: payload.targetExtensions?.trim() ?? '',
 			fileNameRegex: payload.fileNameRegex ?? false,
 			contentRegex : payload.contentRegex ?? false,
@@ -598,6 +622,7 @@ export async function startSearchJob(params: {
 		fileNameQuery: payload.fileNameQuery.trim(),
 		contentQuery : payload.contentQuery.trim(),
 		targetPath   : payload.targetPath?.trim() ?? '',
+		excludePath  : payload.excludePath?.trim() ?? '',
 		targetExtensions: payload.targetExtensions?.trim() ?? '',
 		fileNameRegex: payload.fileNameRegex ?? false,
 		contentRegex : payload.contentRegex ?? false,

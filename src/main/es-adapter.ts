@@ -11,6 +11,12 @@ import {
 	resolveEverythingCmdHome,
 } from './env-resolver';
 import { isValidUtf8 } from './encoding';
+import {
+	filterCandidatePaths,
+	hasFolderWildcard,
+	parseFolderPathList,
+	resolveEsTargetScope,
+} from './folder-path-filter';
 import { formatFileNameRegexAlternationMessage } from './regex-validation';
 import type {
 	EsAdditionalArgsValidation,
@@ -472,6 +478,8 @@ export function buildEsArgs(request: EsSearchRequest): {
 	const errors: string[]   = [];
 	const fileNameQuery      = request.fileNameQuery.trim();
 	const extensions         = normalizeTargetExtensions(request.targetExtensions);
+	const targetPaths        = parseFolderPathList(request.targetPath, '対象フォルダ');
+	const excludePaths       = parseFolderPathList(request.excludePath, '除外フォルダ');
 
 	if (!fileNameQuery) {
 		errors.push('ファイル名検索条件が空です。');
@@ -483,6 +491,14 @@ export function buildEsArgs(request: EsSearchRequest): {
 
 	if (!extensions.valid && extensions.message) {
 		errors.push(extensions.message);
+	}
+
+	if (!targetPaths.valid && targetPaths.message) {
+		errors.push(targetPaths.message);
+	}
+
+	if (!excludePaths.valid && excludePaths.message) {
+		errors.push(excludePaths.message);
 	}
 
 	const additional = validateAdditionalArgs(request.additionalArgs ?? '');
@@ -497,22 +513,30 @@ export function buildEsArgs(request: EsSearchRequest): {
 
 	warnings.push(...additional.warnings);
 
-	const args: string[] = [
+	const needsPostFilter = targetPaths.values.length > 1
+		|| targetPaths.values.some((targetPath) => hasFolderWildcard(targetPath))
+		|| excludePaths.values.length > 0;
+	const maxResultsForEs = needsPostFilter
+		? ES_UNLIMITED_MAX_RESULTS
+		: resolveMaxCandidateFilesForEs(request.maxCandidateFiles);
+	const args: string[]  = [
 		'/a-d',
 		'-cp',
 		ES_PIPE_CODE_PAGE,
 		'-full-path-and-name',
 		'-txt',
 		'-n',
-		String(resolveMaxCandidateFilesForEs(request.maxCandidateFiles)),
+		String(maxResultsForEs),
 		'-timeout',
 		String(request.timeoutMs),
 		'-sort',
 		request.sort,
 	];
 
-	if (request.targetPath?.trim()) {
-		args.push('-path', request.targetPath.trim());
+	const targetScope = resolveEsTargetScope(targetPaths.values);
+
+	if (targetScope) {
+		args.push('-path', targetScope);
 	}
 
 	if (request.caseSensitive) {
@@ -701,7 +725,10 @@ export function searchCandidateFiles(request: EsSearchRequest): Promise<EsSearch
 			activeEsProcess = null;
 			const stdout    = decodeEsStdout(Buffer.concat(stdoutChunks));
 			const stderr    = decodeEsStdout(Buffer.concat(stderrChunks));
-			const files     = parseEsOutput(stdout);
+			const rawFiles  = parseEsOutput(stdout);
+			const targets   = parseFolderPathList(request.targetPath, '対象フォルダ').values;
+			const excludes  = parseFolderPathList(request.excludePath, '除外フォルダ').values;
+			const files     = filterCandidatePaths(rawFiles, targets, excludes, request.maxCandidateFiles);
 			const elapsedMs = Date.now() - startedAt;
 
 			if (exitCode !== 0) {
@@ -726,7 +753,8 @@ export function searchCandidateFiles(request: EsSearchRequest): Promise<EsSearch
 			}
 
 			logger.info('es.exe search completed', {
-				fileCount: files.length,
+				fileCount   : files.length,
+				rawFileCount: rawFiles.length,
 				elapsedMs,
 			});
 
@@ -748,6 +776,7 @@ export function searchCandidateFiles(request: EsSearchRequest): Promise<EsSearch
  * @param {string} params.esExePath es.exe パス
  * @param {string} params.fileNameQuery ファイル名検索条件
  * @param {string} [params.targetPath] 対象フォルダ
+ * @param {string} [params.excludePath] 除外フォルダ
  * @param {boolean} [params.regex] 正規表現モード
  * @param {import('./types').AppSettings['fileNameSearch']} params.fileNameSearch ファイル名検索設定
  * @returns {EsSearchRequest} リクエスト
@@ -756,6 +785,7 @@ export function createEsSearchRequest(params: {
 	esExePath: string;
 	fileNameQuery: string;
 	targetPath?: string;
+	excludePath?: string;
 	targetExtensions?: string;
 	regex?: boolean;
 	fileNameSearch: FileNameSearchSettings;
@@ -764,6 +794,7 @@ export function createEsSearchRequest(params: {
 		esExePath        : params.esExePath,
 		fileNameQuery    : params.fileNameQuery,
 		targetPath       : params.targetPath,
+		excludePath      : params.excludePath,
 		targetExtensions : params.targetExtensions,
 		regex            : params.regex ?? false,
 		caseSensitive    : params.fileNameSearch.caseSensitive,

@@ -60,8 +60,16 @@
 					<div class="tms-grep-form-row">
 						<label class="tms-grep-form-row__label" for="tmsGrepTargetPath">対象フォルダ</label>
 						<div class="tms-grep-form-row__control tms-grep-form-row__control--path">
-							<input id="tmsGrepTargetPath" class="tms-grep-form-row__input" type="text" placeholder="任意。未指定なら Everything 全体" autocomplete="off" />
+							<input id="tmsGrepTargetPath" class="tms-grep-form-row__input" type="text" placeholder="任意。カンマ区切り・環境変数・ワイルドカード対応" autocomplete="off" />
 							<button id="tmsGrepBtnBrowsePath" class="tms-grep-btn tms-grep-btn--small" type="button">参照</button>
+						</div>
+					</div>
+
+					<div class="tms-grep-form-row">
+						<label class="tms-grep-form-row__label" for="tmsGrepExcludePath">除外フォルダ</label>
+						<div class="tms-grep-form-row__control tms-grep-form-row__control--path">
+							<input id="tmsGrepExcludePath" class="tms-grep-form-row__input" type="text" placeholder='任意。例: C:\tmp, "C:\Program Files (x86)"' autocomplete="off" />
+							<button id="tmsGrepBtnBrowseExcludePath" class="tms-grep-btn tms-grep-btn--small" type="button">参照</button>
 						</div>
 					</div>
 
@@ -471,6 +479,10 @@
 					<div class="tms-grep-confirm-summary__row">
 						<dt>対象フォルダ</dt>
 						<dd id="tmsGrepConfirmTargetPath"></dd>
+					</div>
+					<div class="tms-grep-confirm-summary__row">
+						<dt>除外フォルダ</dt>
+						<dd id="tmsGrepConfirmExcludePath"></dd>
 					</div>
 					<div class="tms-grep-confirm-summary__row">
 						<dt>ファイル名の大文字小文字</dt>

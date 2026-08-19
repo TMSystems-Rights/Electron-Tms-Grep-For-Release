@@ -74,6 +74,7 @@ export function createDefaultConfig(): AppConfig {
 			fileNameQuery: '',
 			contentQuery : '',
 			targetPath   : '',
+			excludePath  : '',
 			targetExtensions: '',
 			fileNameRegex: false,
 			contentRegex : false,
@@ -420,6 +421,9 @@ function normalizeConfig(config: Partial<AppConfig>): AppConfig {
 			targetPath: typeof config.lastSearch?.targetPath === 'string'
 				? config.lastSearch.targetPath
 				: defaults.lastSearch.targetPath,
+			excludePath: typeof config.lastSearch?.excludePath === 'string'
+				? config.lastSearch.excludePath
+				: defaults.lastSearch.excludePath,
 			targetExtensions: typeof config.lastSearch?.targetExtensions === 'string'
 				? config.lastSearch.targetExtensions
 				: defaults.lastSearch.targetExtensions,

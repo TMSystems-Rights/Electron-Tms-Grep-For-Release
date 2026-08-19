@@ -67,6 +67,41 @@ try {
 
 	assert.equal(missingPath.valid, false);
 
+	const multiplePaths = validateSearchStartPayload({
+		fileNameQuery: '*.java',
+		contentQuery : 'MyLogger',
+		targetPath   : `"${tempDir}", "${fixturesDir}", `,
+	}, config.settings.contentSearch);
+
+	assert.equal(multiplePaths.valid, true);
+
+	const wildcardPaths = validateSearchStartPayload({
+		fileNameQuery: '*.java',
+		contentQuery : 'MyLogger',
+		targetPath   : 'C:\\*User*\\tm*, *\\*User*\\tmsys',
+		excludePath  : 'C:\\tmp, "C:\\Program Files (x86)", ',
+	}, config.settings.contentSearch);
+
+	assert.equal(wildcardPaths.valid, true);
+
+	const unknownEnvironment = validateSearchStartPayload({
+		fileNameQuery: '*.java',
+		contentQuery : 'MyLogger',
+		targetPath   : '%TMS_GREP_UNKNOWN_PATH%\\src',
+	}, config.settings.contentSearch);
+
+	assert.equal(unknownEnvironment.valid, false);
+	assert.match(unknownEnvironment.message ?? '', /環境変数を解決できません/);
+
+	const unclosedQuote = validateSearchStartPayload({
+		fileNameQuery: '*.java',
+		contentQuery : 'MyLogger',
+		excludePath  : '"C:\\tmp',
+	}, config.settings.contentSearch);
+
+	assert.equal(unclosedQuote.valid, false);
+	assert.match(unclosedQuote.message ?? '', /ダブルクォート/);
+
 	const validPayload = validateSearchStartPayload({
 		fileNameQuery: '*.java',
 		contentQuery : 'MyLogger',

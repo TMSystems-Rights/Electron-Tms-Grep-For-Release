@@ -4,7 +4,7 @@ Everything Search（`es.exe`）によるファイル名検索と、ファイル�
 
 リポジトリ: [TMSystems-Rights/Electron-Tms-Grep-For-Release](https://github.com/TMSystems-Rights/Electron-Tms-Grep-For-Release)
 
-最新リリース: [v1.1.2](https://github.com/TMSystems-Rights/Electron-Tms-Grep-For-Release/releases/tag/v1.1.2)
+最新リリース: [v1.2.0](https://github.com/TMSystems-Rights/Electron-Tms-Grep-For-Release/releases/tag/v1.2.0)
 
 ## v1.0.0 の主な機能
 
@@ -26,6 +26,23 @@ Everything 本体および CLI は、[公式 Downloads ページ](https://www.vo
 
 - Everything 本体: 通常版の x64 Installer または Portable Zip を使用してください（Lite 版は IPC 非対応のため非推奨）。
 - CLI: `Download Everything Command-line Interface` セクションから、環境に合う `ES-x.x.x.x.<arch>.zip` をダウンロードし、展開した `es.exe` のパスを設定してください。
+
+### 対象・除外フォルダの指定
+
+対象フォルダと除外フォルダは、カンマ区切りで複数指定できます。空白を含むパスはダブルクォートで囲むこともでき、末尾のカンマは無視されます。
+
+```text
+C:\tmp, "C:\Program Files (x86)",
+```
+
+`%APPDATA%` などの環境変数と、フォルダ名に対する `*` / `?` ワイルドカードを使用できます。先頭の `*\` は任意のドライブを表します。
+
+```text
+C:\*User*\tm*
+*\*User*\tmsys
+```
+
+対象フォルダを未指定にすると Everything 全体が対象になります。除外フォルダの通常パスは前方一致で適用されるため、`C:\Program Files` は `C:\Program Files (x86)` も除外します。
 
 ## セットアップ
 
@@ -94,7 +111,7 @@ npm run test
 npm run dist
 ```
 
-出力先: `release/<version>/TmsGrep-<version>-setup.exe`（例: `release/1.1.2/TmsGrep-1.1.2-setup.exe`）
+出力先: `release/<version>/TmsGrep-<version>-setup.exe`（例: `release/1.2.0/TmsGrep-1.2.0-setup.exe`）
 
 `npm run dist` / `npm run dist:publish` 実行前に、`scripts/ensure-dist-ready.ps1` が `app.asar` の**上書き可否**（rename テスト）を検査します。問題があればビルド開始前に中止します（ファイルの削除は行いません）。
 

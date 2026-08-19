@@ -227,6 +227,7 @@ Object.assign(TMS_GREP.Es, {
 	RunCandidateSearch: async function () {
 		const fileNameInput   = document.getElementById('tmsGrepFileNameQuery');
 		const targetInput     = document.getElementById('tmsGrepTargetPath');
+		const excludeInput    = document.getElementById('tmsGrepExcludePath');
 		const extensionsInput = document.getElementById('tmsGrepTargetExtensions');
 		const regexInput      = document.getElementById('tmsGrepFileNameRegex');
 
@@ -253,6 +254,7 @@ Object.assign(TMS_GREP.Es, {
 			const result = await window.grepApi.searchEsCandidates({
 				fileNameQuery,
 				targetPath: targetInput?.value.trim() || undefined,
+				excludePath: excludeInput?.value.trim() || undefined,
 				targetExtensions: extensionsInput?.value.trim() || undefined,
 				regex     : Boolean(regexInput?.checked),
 			});
@@ -319,6 +321,7 @@ Object.assign(TMS_GREP.Es, {
 		const fileNameInput      = document.getElementById('tmsGrepFileNameQuery');
 		const fileNameRegexInput = document.getElementById('tmsGrepFileNameRegex');
 		const targetInput        = document.getElementById('tmsGrepTargetPath');
+		const excludeInput       = document.getElementById('tmsGrepExcludePath');
 		const extensionsInput    = document.getElementById('tmsGrepTargetExtensions');
 		const lastSearch         = config.lastSearch;
 
@@ -332,6 +335,10 @@ Object.assign(TMS_GREP.Es, {
 
 		if (targetInput) {
 			targetInput.value = lastSearch.targetPath ?? '';
+		}
+
+		if (excludeInput) {
+			excludeInput.value = lastSearch.excludePath ?? '';
 		}
 
 		if (extensionsInput) {

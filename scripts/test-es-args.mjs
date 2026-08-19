@@ -16,6 +16,11 @@ import {
 	tokenizeAdditionalArgs,
 	validateAdditionalArgs,
 } from '../dist/main/es-adapter.js';
+import {
+	filterCandidatePaths,
+	parseFolderPathList,
+	resolveEsTargetScope,
+} from '../dist/main/folder-path-filter.js';
 
 const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'tms-grep-es-args-'));
 
@@ -91,6 +96,82 @@ app.whenReady().then(() => {
 
 		assert.ok(withPath.args.includes('-path'));
 		assert.ok(withPath.args.includes('D:\\src'));
+
+		const parsedPaths = parseFolderPathList('C:\\tmp, "C:\\Program Files (x86)", ', '除外フォルダ');
+
+		assert.deepEqual(parsedPaths, {
+			valid : true,
+			values: ['C:\\tmp', 'C:\\Program Files (x86)'],
+		});
+
+		process.env.TMS_GREP_TEST_PATH = 'C:\\Users\\tmsys';
+
+		try {
+			assert.deepEqual(parseFolderPathList('%TMS_GREP_TEST_PATH%, D:\\work', '対象フォルダ'), {
+				valid : true,
+				values: ['C:\\Users\\tmsys', 'D:\\work'],
+			});
+		} finally {
+			delete process.env.TMS_GREP_TEST_PATH;
+		}
+
+		const unresolvedEnvironment = parseFolderPathList('%TMS_GREP_UNKNOWN_PATH%\\src', '対象フォルダ');
+
+		assert.equal(unresolvedEnvironment.valid, false);
+		assert.match(unresolvedEnvironment.message ?? '', /環境変数を解決できません/);
+
+		const candidatePaths = [
+			'C:\\tmp\\skip.txt',
+			'C:\\Program Files\\skip.txt',
+			'C:\\Program Files (x86)\\skip.txt',
+			'C:\\Users\\tmsys\\skip.txt',
+			'D:\\SomeUserName\\tmsys\\skip.txt',
+			'D:\\work\\keep.txt',
+		];
+
+		assert.deepEqual(filterCandidatePaths(candidatePaths, [], ['C:\\*'], 0), [
+			'D:\\SomeUserName\\tmsys\\skip.txt',
+			'D:\\work\\keep.txt',
+		]);
+		assert.deepEqual(filterCandidatePaths(candidatePaths, [], ['C:\\*User*\\tm*'], 0), [
+			'C:\\tmp\\skip.txt',
+			'C:\\Program Files\\skip.txt',
+			'C:\\Program Files (x86)\\skip.txt',
+			'D:\\SomeUserName\\tmsys\\skip.txt',
+			'D:\\work\\keep.txt',
+		]);
+		assert.deepEqual(filterCandidatePaths(candidatePaths, [], ['*\\*User*\\tmsys'], 0), [
+			'C:\\tmp\\skip.txt',
+			'C:\\Program Files\\skip.txt',
+			'C:\\Program Files (x86)\\skip.txt',
+			'D:\\work\\keep.txt',
+		]);
+		assert.deepEqual(filterCandidatePaths(candidatePaths, [], ['C:\\Program Files'], 0), [
+			'C:\\tmp\\skip.txt',
+			'C:\\Users\\tmsys\\skip.txt',
+			'D:\\SomeUserName\\tmsys\\skip.txt',
+			'D:\\work\\keep.txt',
+		]);
+
+		assert.deepEqual(filterCandidatePaths(candidatePaths, [
+			'C:\\*User*\\tm*',
+			'D:\\work',
+		], [], 0), [
+			'C:\\Users\\tmsys\\skip.txt',
+			'D:\\work\\keep.txt',
+		]);
+		assert.equal(resolveEsTargetScope(['C:\\*User*\\tm*']), 'C:\\');
+		assert.equal(resolveEsTargetScope(['C:\\Program*\\src']), 'C:\\');
+
+		const withPathFilters = buildEsArgs({
+			...baseRequest,
+			targetPath : 'C:\\src, D:\\src',
+			excludePath: 'C:\\src\\tmp',
+		});
+
+		assert.equal(withPathFilters.errors.length, 0);
+		assert.equal(withPathFilters.args[6], String(ES_UNLIMITED_MAX_RESULTS));
+		assert.equal(withPathFilters.args.includes('-path'), false);
 
 		const withExtensions = buildEsArgs({
 			...baseRequest,

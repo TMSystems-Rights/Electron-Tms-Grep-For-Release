@@ -62,6 +62,7 @@ Object.assign(TMS_GREP.Search, {
 		const fileNameInput   = document.getElementById('tmsGrepFileNameQuery');
 		const contentInput    = document.getElementById('tmsGrepContentQuery');
 		const targetInput     = document.getElementById('tmsGrepTargetPath');
+		const excludeInput    = document.getElementById('tmsGrepExcludePath');
 		const extensionsInput = document.getElementById('tmsGrepTargetExtensions');
 		const fileNameRegex   = document.getElementById('tmsGrepFileNameRegex');
 		const contentRegex    = document.getElementById('tmsGrepContentRegex');
@@ -70,6 +71,7 @@ Object.assign(TMS_GREP.Search, {
 			fileNameQuery: fileNameInput?.value.trim() ?? '',
 			contentQuery : contentInput?.value.trim() ?? '',
 			targetPath   : targetInput?.value.trim() ?? '',
+			excludePath  : excludeInput?.value.trim() ?? '',
 			targetExtensions: extensionsInput?.value.trim() ?? '',
 			fileNameRegex: Boolean(fileNameRegex?.checked),
 			contentRegex : Boolean(contentRegex?.checked),
@@ -87,6 +89,7 @@ Object.assign(TMS_GREP.Search, {
 			fileNameQuery: values.fileNameQuery,
 			contentQuery : values.contentQuery,
 			targetPath   : values.targetPath,
+			excludePath  : values.excludePath,
 			targetExtensions: values.targetExtensions,
 			fileNameRegex: values.fileNameRegex,
 			contentRegex : values.contentRegex,
@@ -108,6 +111,7 @@ Object.assign(TMS_GREP.Search, {
 		return current.fileNameQuery === payload.fileNameQuery
 			&& current.contentQuery === payload.contentQuery
 			&& current.targetPath === payload.targetPath
+			&& current.excludePath === payload.excludePath
 			&& current.targetExtensions === payload.targetExtensions
 			&& current.fileNameRegex === payload.fileNameRegex
 			&& current.contentRegex === payload.contentRegex;
@@ -556,6 +560,7 @@ Object.assign(TMS_GREP.Search, {
 			fileNameQuery: values.fileNameQuery,
 			contentQuery : values.contentQuery,
 			targetPath   : values.targetPath || undefined,
+			excludePath  : values.excludePath || undefined,
 			targetExtensions: values.targetExtensions || undefined,
 			fileNameRegex: values.fileNameRegex,
 			contentRegex : values.contentRegex,
@@ -598,6 +603,7 @@ Object.assign(TMS_GREP.Search, {
 				targetExtensions     : values.targetExtensions,
 				contentQuery         : values.contentQuery,
 				targetPath           : values.targetPath,
+				excludePath          : values.excludePath,
 				fileNameRegex        : values.fileNameRegex,
 				contentRegex         : values.contentRegex,
 				fileNameCaseSensitive: config.settings.fileNameSearch.caseSensitive,
@@ -638,6 +644,7 @@ Object.assign(TMS_GREP.Search, {
 			fileNameQuery: values.fileNameQuery,
 			contentQuery : values.contentQuery,
 			targetPath   : values.targetPath || undefined,
+			excludePath  : values.excludePath || undefined,
 			targetExtensions: values.targetExtensions || undefined,
 			fileNameRegex: values.fileNameRegex,
 			contentRegex : values.contentRegex,
@@ -732,6 +739,7 @@ Object.assign(TMS_GREP.Search, {
 		const fileNameInput   = document.getElementById('tmsGrepFileNameQuery');
 		const contentInput    = document.getElementById('tmsGrepContentQuery');
 		const targetInput     = document.getElementById('tmsGrepTargetPath');
+		const excludeInput    = document.getElementById('tmsGrepExcludePath');
 		const extensionsInput = document.getElementById('tmsGrepTargetExtensions');
 		const fileNameRegex   = document.getElementById('tmsGrepFileNameRegex');
 		const contentRegex    = document.getElementById('tmsGrepContentRegex');
@@ -746,6 +754,10 @@ Object.assign(TMS_GREP.Search, {
 
 		if (targetInput) {
 			targetInput.value = '';
+		}
+
+		if (excludeInput) {
+			excludeInput.value = '';
 		}
 
 		if (extensionsInput) {
@@ -789,10 +801,11 @@ Object.assign(TMS_GREP.Search, {
 	},
 
 	/**
-	 * 対象フォルダ参照ダイアログを開く
+	 * フォルダ参照ダイアログを開き、指定入力欄へ追記する
+	 * @param {string} inputId 入力欄 ID
 	 * @returns {Promise<void>}
 	 */
-	BrowseTargetPath: async function () {
+	BrowseFolderPath: async function (inputId) {
 		if (TMS_GREP.Search.IsBusy()) {
 			return;
 		}
@@ -803,14 +816,33 @@ Object.assign(TMS_GREP.Search, {
 			return;
 		}
 
-		const targetInput = document.getElementById('tmsGrepTargetPath');
+		const targetInput = document.getElementById(inputId);
 
 		if (targetInput instanceof HTMLInputElement) {
-			targetInput.value = selected;
+			const formatted   = selected.includes(',') ? `"${selected}"` : selected;
+			targetInput.value = targetInput.value.trim()
+				? `${targetInput.value.trim()}, ${formatted}`
+				: formatted;
 		}
 
 		TMS_GREP.Search.PersistLastSearchImmediate();
 		TMS_GREP.Search.UpdateButtons();
+	},
+
+	/**
+	 * 対象フォルダ参照ダイアログを開く
+	 * @returns {Promise<void>}
+	 */
+	BrowseTargetPath: async function () {
+		await TMS_GREP.Search.BrowseFolderPath('tmsGrepTargetPath');
+	},
+
+	/**
+	 * 除外フォルダ参照ダイアログを開く
+	 * @returns {Promise<void>}
+	 */
+	BrowseExcludePath: async function () {
+		await TMS_GREP.Search.BrowseFolderPath('tmsGrepExcludePath');
 	},
 
 	/**
@@ -885,16 +917,18 @@ Object.assign(TMS_GREP.Search, {
 			});
 		});
 
-		const searchBtn       = document.getElementById('tmsGrepBtnSearch');
-		const clearBtn        = document.getElementById('tmsGrepBtnClear');
-		const cancelBtn       = document.getElementById('tmsGrepBtnCancel');
-		const fileNameInput   = document.getElementById('tmsGrepFileNameQuery');
-		const contentInput    = document.getElementById('tmsGrepContentQuery');
-		const targetInput     = document.getElementById('tmsGrepTargetPath');
-		const extensionsInput = document.getElementById('tmsGrepTargetExtensions');
-		const fileNameRegex   = document.getElementById('tmsGrepFileNameRegex');
-		const contentRegex    = document.getElementById('tmsGrepContentRegex');
-		const browsePathBtn   = document.getElementById('tmsGrepBtnBrowsePath');
+		const searchBtn            = document.getElementById('tmsGrepBtnSearch');
+		const clearBtn             = document.getElementById('tmsGrepBtnClear');
+		const cancelBtn            = document.getElementById('tmsGrepBtnCancel');
+		const fileNameInput        = document.getElementById('tmsGrepFileNameQuery');
+		const contentInput         = document.getElementById('tmsGrepContentQuery');
+		const targetInput          = document.getElementById('tmsGrepTargetPath');
+		const excludeInput         = document.getElementById('tmsGrepExcludePath');
+		const extensionsInput      = document.getElementById('tmsGrepTargetExtensions');
+		const fileNameRegex        = document.getElementById('tmsGrepFileNameRegex');
+		const contentRegex         = document.getElementById('tmsGrepContentRegex');
+		const browsePathBtn        = document.getElementById('tmsGrepBtnBrowsePath');
+		const browseExcludePathBtn = document.getElementById('tmsGrepBtnBrowseExcludePath');
 
 		if (searchBtn) {
 			searchBtn.addEventListener('click', () => {
@@ -920,7 +954,13 @@ Object.assign(TMS_GREP.Search, {
 			});
 		}
 
-		for (const input of [contentInput, targetInput, extensionsInput]) {
+		if (browseExcludePathBtn) {
+			browseExcludePathBtn.addEventListener('click', () => {
+				void TMS_GREP.Search.BrowseExcludePath();
+			});
+		}
+
+		for (const input of [contentInput, targetInput, excludeInput, extensionsInput]) {
 			input?.addEventListener('input', () => {
 				TMS_GREP.Search.SchedulePersistLastSearch();
 				TMS_GREP.Search.UpdateButtons();

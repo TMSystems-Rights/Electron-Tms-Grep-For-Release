@@ -245,6 +245,7 @@ export function registerIpcHandlers(): void {
 	ipcMain.handle('es:search', async (_event, payload: {
 		fileNameQuery: string;
 		targetPath?: string;
+		excludePath?: string;
 		targetExtensions?: string;
 		regex?: boolean;
 	}): Promise<EsCandidateSearchResult> => {
@@ -267,6 +268,7 @@ export function registerIpcHandlers(): void {
 				esExePath       : detect.path,
 				fileNameQuery   : payload.fileNameQuery,
 				targetPath      : payload.targetPath,
+				excludePath     : payload.excludePath,
 				targetExtensions: payload.targetExtensions,
 				regex           : payload.regex ?? false,
 				fileNameSearch  : config.settings.fileNameSearch,

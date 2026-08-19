@@ -62,6 +62,8 @@ app.whenReady().then(async () => {
 	const result = await win.webContents.executeJavaScript(`(async () => {
 		const fileNameInput = document.getElementById('tmsGrepFileNameQuery');
 		const contentInput = document.getElementById('tmsGrepContentQuery');
+		const targetInput = document.getElementById('tmsGrepTargetPath');
+		const excludeInput = document.getElementById('tmsGrepExcludePath');
 		const searchBtn = document.getElementById('tmsGrepBtnSearch');
 		const settingsBtn = document.getElementById('tmsGrepBtnSettings');
 		const settingsModal = document.getElementById('tmsGrepModalSettings');
@@ -77,12 +79,15 @@ app.whenReady().then(async () => {
 			searchDisabledWhenEmpty: searchBtn?.disabled === true,
 			progressHidden: progressPanel?.hidden === true,
 			progressHasStateText: Boolean(progressState?.textContent),
+			excludeInputExists: excludeInput instanceof HTMLInputElement,
 		};
 
 		fileNameInput.value = '*.java';
 		fileNameInput.dispatchEvent(new Event('input', { bubbles: true }));
 		contentInput.value = 'MyLogger';
 		contentInput.dispatchEvent(new Event('input', { bubbles: true }));
+		targetInput.value = 'C:\\src, D:\\work';
+		excludeInput.value = 'C:\\src\\tmp, %TEMP%\\cache';
 		TMS_GREP.Es._status = { available: true, path: 'C:\\\\Tools\\\\es.exe' };
 		TMS_GREP.Search._fileNameValid = true;
 		TMS_GREP.Search._contentRegexValid = true;
@@ -90,6 +95,8 @@ app.whenReady().then(async () => {
 
 		const filled = {
 			searchEnabled: searchBtn?.disabled === false,
+			folderValuesIncluded: TMS_GREP.Search.GetFormValues().targetPath === 'C:\\src, D:\\work'
+				&& TMS_GREP.Search.GetFormValues().excludePath === 'C:\\src\\tmp, %TEMP%\\cache',
 		};
 
 		TMS_GREP.Es._status = { available: false, path: '', message: 'es.exe not found' };
@@ -146,7 +153,9 @@ app.whenReady().then(async () => {
 		&& result.initial.searchDisabledWhenEmpty
 		&& result.initial.progressHidden
 		&& result.initial.progressHasStateText
+		&& result.initial.excludeInputExists
 		&& result.filled.searchEnabled
+		&& result.filled.folderValuesIncluded
 		&& result.esMissing.searchDisabled
 		&& result.esMissing.warningVisible
 		&& result.settingsOpen.modalVisible
