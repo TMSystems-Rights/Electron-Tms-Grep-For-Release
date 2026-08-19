@@ -178,7 +178,9 @@ AI（Cursor 等）がリリース作業を行う場合は、`.cursor/rules/relea
 
 #### GitHub Release 公開
 
-`gh` で Release に成果物をアップロードします。公開リポジトリでは自動更新用の GitHub Release 取得にトークンは不要です。Release 作成・asset 置換に使う認証情報は `gh auth login` などの CLI 側で扱い、リポジトリや配布物に含めません。
+`gh` で Release に成果物をアップロードします。公開リポジトリでは自動更新用の GitHub Release 取得にトークンは不要です。
+
+AppsLauncher / MDEditor と同じく、通常の `GH_TOKEN` は読み取り専用、`GITHUB_RELEASE_TOKEN` は Release 作成・asset アップロード用の読み書きトークンとして使い分けます。Release 操作中だけ `GITHUB_RELEASE_TOKEN` を `GH_TOKEN` に割り当て、処理後は必ず元の値へ復元します。
 
 ```powershell
 $version = (Get-Content package.json -Raw | ConvertFrom-Json).version
@@ -186,27 +188,48 @@ $tag = "v$version"
 $repo = "TMSystems-Rights/Electron-Tms-Grep-For-Release"
 $releaseDir = "release\$version"
 $target = git rev-parse HEAD
+$originalGhToken = $env:GH_TOKEN
 
-gh release create $tag `
-	"$releaseDir\TmsGrep-$version-setup.exe" `
-	"$releaseDir\TmsGrep-$version-setup.exe.blockmap" `
-	"$releaseDir\latest.yml" `
-	--repo $repo `
-	--target $target `
-	--title $tag `
-	--notes "TMS-GREP $tag"
+try {
+	if ([string]::IsNullOrWhiteSpace($env:GITHUB_RELEASE_TOKEN)) {
+		throw "GITHUB_RELEASE_TOKEN が設定されていません。"
+	}
+
+	$env:GH_TOKEN = $env:GITHUB_RELEASE_TOKEN
+	gh auth status --hostname github.com
+	if ($LASTEXITCODE -ne 0) { throw "GitHub CLI の認証確認に失敗しました。" }
+
+	gh release view $tag --repo $repo *> $null
+	if ($LASTEXITCODE -eq 0) {
+		gh release upload $tag `
+			"$releaseDir\TmsGrep-$version-setup.exe" `
+			"$releaseDir\TmsGrep-$version-setup.exe.blockmap" `
+			"$releaseDir\latest.yml" `
+			--repo $repo `
+			--clobber
+	} else {
+		gh release create $tag `
+			"$releaseDir\TmsGrep-$version-setup.exe" `
+			"$releaseDir\TmsGrep-$version-setup.exe.blockmap" `
+			"$releaseDir\latest.yml" `
+			--repo $repo `
+			--target $target `
+			--title $tag `
+			--notes "TMS-GREP $tag"
+	}
+	if ($LASTEXITCODE -ne 0) { throw "GitHub Release の作成または更新に失敗しました。" }
+
+	gh release view $tag --repo $repo --json assets,url,tagName
+} finally {
+	if ($null -eq $originalGhToken) {
+		Remove-Item Env:GH_TOKEN -ErrorAction SilentlyContinue
+	} else {
+		$env:GH_TOKEN = $originalGhToken
+	}
+}
 ```
 
-既存 Release の asset を差し替える場合は、同じ 3 点を `--clobber` でまとめて上書きします。
-
-```powershell
-gh release upload $tag `
-	"$releaseDir\TmsGrep-$version-setup.exe" `
-	"$releaseDir\TmsGrep-$version-setup.exe.blockmap" `
-	"$releaseDir\latest.yml" `
-	--repo $repo `
-	--clobber
-```
+既存 Release の場合は、同じ 3 点を `--clobber` でまとめて上書きします。最後の `gh release view` の出力で必須 3 点が揃っていることを確認してください。
 
 #### 公開後の確認（必須）
 
@@ -228,14 +251,21 @@ git add .
 git commit -m "v1.x.x で〇〇を追加する"
 git push origin main
 npm run dist
-# gh release create/upload で setup.exe / blockmap / latest.yml を公開
+# 上記 GitHub Release 公開例の try/finally で、読み書きトークンを一時割り当てして3資産を公開
 git fetch origin tag v1.x.x
 pwsh -NoProfile -File scripts/verify-release-tag.ps1
 ```
 
 #### 認証情報の扱い
 
-公開リポジトリでは、`electron-builder.yml` に `publish.private` や `publish.token` を設定しません。GitHub Release へアップロードするために個人アクセストークン等を使う場合も、値を README・設定ファイル・コミット履歴・配布物へ含めないでください。
+| 環境変数                 | GitHub上のトークン名               | 用途                                  |
+| ------------------------ | ---------------------------------- | ------------------------------------- |
+| `GH_TOKEN`               | Electronアプリ-読み取り専用        | 読み取り操作用                        |
+| `GITHUB_RELEASE_TOKEN`   | Electronアプリ-読み取り、書き込み  | Release 作成・asset アップロード用    |
+
+`GITHUB_RELEASE_TOKEN` の Fine-grained PAT には、このリポジトリと `Contents: Read and write` を許可します。公開リポジトリでは、`electron-builder.yml` に `publish.private` や `publish.token` を設定しません。トークン値は README・設定ファイル・コンソールログ・コミット履歴・配布物へ含めないでください。
+
+403が発生しても、`GH_TOKEN` を削除してkeyring認証へフォールバックしません。まず `GITHUB_RELEASE_TOKEN` の設定、対象リポジトリ、書き込み権限を確認してください。
 
 ### 自動更新
 

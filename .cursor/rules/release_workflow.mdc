@@ -32,6 +32,15 @@ alwaysApply: true
     - 公開リポジトリの自動更新取得にトークンは不要
     - 認証情報の値を README、設定ファイル、コミット履歴、配布物へ含めない
 
+## GitHub Release 用トークン（AppsLauncher / MDEditor と共通）
+
+- `GH_TOKEN` は読み取り専用、`GITHUB_RELEASE_TOKEN` は Release 作成・asset アップロード用の読み書きトークンとして使い分ける。
+- `gh release create` / `gh release upload` / `gh release view` の実行時だけ、`GITHUB_RELEASE_TOKEN` をプロセス環境の `GH_TOKEN` へ一時割り当てする。
+- 割り当て前の `GH_TOKEN` を保存し、`finally` で元の値へ復元する。元々未設定だった場合だけ削除する。
+- `GITHUB_RELEASE_TOKEN` が未設定のまま keyring へフォールバックして公開しない。403 の場合も `GH_TOKEN` を単純に削除せず、読み書きトークンの設定と対象リポジトリ権限を確認する。
+- Fine-grained PAT には `TMSystems-Rights/Electron-Tms-Grep-For-Release` と `Contents: Read and write` を許可する。
+- トークン値をコンソール、ログ、ドキュメント、設定、コミット履歴、配布物へ出力・保存しない。
+
 ## 必須成果物
 
 `npm run dist` 後、`release/<version>/` に次の 3 点があることを確認する。
@@ -52,32 +61,48 @@ $tag = "v$version"
 $repo = "TMSystems-Rights/Electron-Tms-Grep-For-Release"
 $releaseDir = "release\$version"
 $target = git rev-parse HEAD
+$originalGhToken = $env:GH_TOKEN
 
-gh release view $tag --repo $repo *> $null
-if ($LASTEXITCODE -eq 0) {
-	gh release upload $tag `
-		"$releaseDir\TmsGrep-$version-setup.exe" `
-		"$releaseDir\TmsGrep-$version-setup.exe.blockmap" `
-		"$releaseDir\latest.yml" `
-		--repo $repo `
-		--clobber
-} else {
-	gh release create $tag `
-		"$releaseDir\TmsGrep-$version-setup.exe" `
-		"$releaseDir\TmsGrep-$version-setup.exe.blockmap" `
-		"$releaseDir\latest.yml" `
-		--repo $repo `
-		--target $target `
-		--title $tag `
-		--notes "TMS-GREP $tag"
+try {
+	if ([string]::IsNullOrWhiteSpace($env:GITHUB_RELEASE_TOKEN)) {
+		throw "GITHUB_RELEASE_TOKEN が設定されていません。"
+	}
+
+	$env:GH_TOKEN = $env:GITHUB_RELEASE_TOKEN
+	gh auth status --hostname github.com
+	if ($LASTEXITCODE -ne 0) { throw "GitHub CLI の認証確認に失敗しました。" }
+
+	gh release view $tag --repo $repo *> $null
+	if ($LASTEXITCODE -eq 0) {
+		gh release upload $tag `
+			"$releaseDir\TmsGrep-$version-setup.exe" `
+			"$releaseDir\TmsGrep-$version-setup.exe.blockmap" `
+			"$releaseDir\latest.yml" `
+			--repo $repo `
+			--clobber
+	} else {
+		gh release create $tag `
+			"$releaseDir\TmsGrep-$version-setup.exe" `
+			"$releaseDir\TmsGrep-$version-setup.exe.blockmap" `
+			"$releaseDir\latest.yml" `
+			--repo $repo `
+			--target $target `
+			--title $tag `
+			--notes "TMS-GREP $tag"
+	}
+	if ($LASTEXITCODE -ne 0) { throw "GitHub Release の作成または更新に失敗しました。" }
+
+	gh release view $tag --repo $repo --json assets,url,tagName
+} finally {
+	if ($null -eq $originalGhToken) {
+		Remove-Item Env:GH_TOKEN -ErrorAction SilentlyContinue
+	} else {
+		$env:GH_TOKEN = $originalGhToken
+	}
 }
 ```
 
-公開後、GitHub Release の assets に次の 3 点が揃っていることを確認する。
-
-```powershell
-gh release view $tag --repo $repo --json assets,url,tagName
-```
+最後の `gh release view` の出力で、GitHub Release の assets に必須 3 点が揃っていることを確認する。
 
 ## 公開後の確認（必須）
 
@@ -120,6 +145,7 @@ pwsh -NoProfile -File scripts/verify-release-tag.ps1
 - `npm run dist:publish` を通常手順として使わない
     - 使ってしまった場合は、上記「`dist:publish` が途中失敗した場合」に従い、assets 3 点とタグを検証する
 - `gh release upload --clobber` は、既存 asset の削除 / 置換に必要な権限を持つ `gh` 認証で実行する
+- Release 操作へ読み取り専用の `GH_TOKEN` をそのまま使わない。必ず `GITHUB_RELEASE_TOKEN` を一時割り当てし、終了時に元の値へ復元する
 - 認証トークンや個人環境の実パスを README、設定ファイル、コミット履歴、配布物へ含めない
 - バージョンを上げない軽微な修正（README・設計ドキュメント等）では Release 公開は不要（commit → push だけでよい）
 
@@ -141,15 +167,28 @@ $tag = "v$version"
 $repo = "TMSystems-Rights/Electron-Tms-Grep-For-Release"
 $releaseDir = "release\$version"
 $target = git rev-parse HEAD
+$originalGhToken = $env:GH_TOKEN
 
-gh release create $tag `
-	"$releaseDir\TmsGrep-$version-setup.exe" `
-	"$releaseDir\TmsGrep-$version-setup.exe.blockmap" `
-	"$releaseDir\latest.yml" `
-	--repo $repo `
-	--target $target `
-	--title $tag `
-	--notes "TMS-GREP $tag"
+try {
+	if ([string]::IsNullOrWhiteSpace($env:GITHUB_RELEASE_TOKEN)) {
+		throw "GITHUB_RELEASE_TOKEN が設定されていません。"
+	}
+	$env:GH_TOKEN = $env:GITHUB_RELEASE_TOKEN
+	gh release create $tag `
+		"$releaseDir\TmsGrep-$version-setup.exe" `
+		"$releaseDir\TmsGrep-$version-setup.exe.blockmap" `
+		"$releaseDir\latest.yml" `
+		--repo $repo `
+		--target $target `
+		--title $tag `
+		--notes "TMS-GREP $tag"
+} finally {
+	if ($null -eq $originalGhToken) {
+		Remove-Item Env:GH_TOKEN -ErrorAction SilentlyContinue
+	} else {
+		$env:GH_TOKEN = $originalGhToken
+	}
+}
 
 git fetch origin tag $tag
 pwsh -NoProfile -File scripts/verify-release-tag.ps1
