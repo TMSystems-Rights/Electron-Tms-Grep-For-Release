@@ -957,6 +957,14 @@ Object.assign(TMS_GREP.Settings, {
 			}
 
 			if (result.status === 'available') {
+				if (result.mode === 'portable') {
+					TMS_GREP_COMMON.Ui.ShowToast(
+						`新しいバージョン v${result.version ?? ''} が見つかりました。公式ページからポータブル ZIP 版をダウンロードしてください。`,
+						'info',
+					);
+					return;
+				}
+
 				TMS_GREP_COMMON.Ui.ShowToast(
 					`新しいバージョン v${result.version ?? ''} が見つかりました。ダウンロードを開始します。`,
 					'info',

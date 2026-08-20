@@ -447,6 +447,14 @@ Object.assign(TMS_GREP.App, {
 	 */
 	HandleUpdateStatus: function (payload) {
 		if (payload.type === 'available') {
+			if (payload.mode === 'portable') {
+				TMS_GREP_COMMON.Ui.ShowToast(
+					`新しいバージョン v${payload.version} があります。公式ページからポータブル ZIP 版をダウンロードしてください。`,
+					'info',
+				);
+				return;
+			}
+
 			TMS_GREP_COMMON.Ui.ShowToast(
 				`新しいバージョン v${payload.version} をダウンロードしています…`,
 				'info',

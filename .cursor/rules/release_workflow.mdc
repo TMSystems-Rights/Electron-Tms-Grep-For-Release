@@ -18,14 +18,16 @@ alwaysApply: true
 4. **git commit**（バージョン更新と変更をすべて含める。共同作業者表記が必要な場合のみ trailer を付ける）
 5. **git push origin main**
 6. `git status` が clean で、`HEAD` と `origin/main` が一致していることを確認する
-7. **`npm run dist`** でローカル成果物を生成する
-8. GitHub Release に同一ビルドの成果物 3 点を公開する
-9. **タグの一致を確認する**（下記「公開後の確認」）
+7. **`npm run dist`** でインストーラ成果物を生成する
+8. **`npm run package:portable`** でポータブル ZIP と SHA-256 を生成する
+9. GitHub Release に同一ビルドの成果物 5 点を公開する
+10. **タグの一致を確認する**（下記「公開後の確認」）
 
 ## dist 前の確認
 
 - `git status` が clean（未コミットの version 変更がない）
 - `git rev-parse HEAD` と `git rev-parse origin/main` が一致している
+- テスト・動作確認で起動した `TmsGrep.exe` / `electron.exe` が残っていない
 - **コミット済み**の `package.json` の `version` が今回のリリース番号と一致している
     - ローカルだけ version を上げて未コミットのままビルドすると、インストーラ内容と Release タグの対応がずれる
 - GitHub Release 公開前に `gh auth status --hostname github.com` で必要な権限の認証状態を確認する
@@ -43,13 +45,15 @@ alwaysApply: true
 
 ## 必須成果物
 
-`npm run dist` 後、`release/<version>/` に次の 3 点があることを確認する。
+`npm run dist` のあと `npm run package:portable` を実行し、`release/<version>/` に次の 5 点があることを確認する。
 
 - `TmsGrep-<version>-setup.exe`
 - `TmsGrep-<version>-setup.exe.blockmap`
 - `latest.yml`
+- `TmsGrep-<version>-portable-x64.zip`
+- `TmsGrep-<version>-portable-x64.zip.sha256`
 
-`latest.yml` は同じ `npm run dist` で生成された `setup.exe` の `sha512` と `size` を持つ。`npm run dist` を再実行した場合は、**必ず setup.exe / blockmap / latest.yml の 3 点を同じ実行結果でまとめて公開し直す**。
+`latest.yml` は同じ `npm run dist` で生成された `setup.exe` の `sha512` と `size` を持つ。ポータブル ZIP は `latest.yml` に載せない。`npm run dist` を再実行した場合は、**必ず setup.exe / blockmap / latest.yml の 3 点を同じ実行結果でまとめ、その `win-unpacked` から ZIP も作り直して公開し直す**。
 
 ## GitHub Release 公開
 
@@ -78,6 +82,8 @@ try {
 			"$releaseDir\TmsGrep-$version-setup.exe" `
 			"$releaseDir\TmsGrep-$version-setup.exe.blockmap" `
 			"$releaseDir\latest.yml" `
+			"$releaseDir\TmsGrep-$version-portable-x64.zip" `
+			"$releaseDir\TmsGrep-$version-portable-x64.zip.sha256" `
 			--repo $repo `
 			--clobber
 	} else {
@@ -85,6 +91,8 @@ try {
 			"$releaseDir\TmsGrep-$version-setup.exe" `
 			"$releaseDir\TmsGrep-$version-setup.exe.blockmap" `
 			"$releaseDir\latest.yml" `
+			"$releaseDir\TmsGrep-$version-portable-x64.zip" `
+			"$releaseDir\TmsGrep-$version-portable-x64.zip.sha256" `
 			--repo $repo `
 			--target $target `
 			--title $tag `
@@ -102,7 +110,7 @@ try {
 }
 ```
 
-最後の `gh release view` の出力で、GitHub Release の assets に必須 3 点が揃っていることを確認する。
+最後の `gh release view` の出力で、GitHub Release の assets に必須 5 点が揃っていることを確認する。
 
 ## 公開後の確認（必須）
 
@@ -131,11 +139,11 @@ pwsh -NoProfile -File scripts/verify-release-tag.ps1
 
 1. `git status` が clean で、`HEAD` と `origin/main` が一致していることを確認する
 2. `gh release view v<version> --repo TMSystems-Rights/Electron-Tms-Grep-For-Release --json assets,url,tagName` で Release 状態を確認する
-3. `npm run dist` を実行し、`release/<version>/` に setup.exe / blockmap / latest.yml を同一ビルドで生成し直す
-4. 必要な権限を持つ `gh` 認証で、`gh release upload v<version> ... --clobber` を実行し、3 点をまとめて上書きする
+3. `npm run dist` を実行し、続けて `npm run package:portable` で ZIP を同一の `win-unpacked` から生成し直す
+4. 必要な権限を持つ `gh` 認証で、`gh release upload v<version> ... --clobber` を実行し、5 点をまとめて上書きする
 5. `git fetch origin tag v<version>` 後に `scripts/verify-release-tag.ps1` を実行する
 
-部分公開のまま終了してはいけない。特に `latest.yml` が無い、または `latest.yml` の `sha512` が公開済み `setup.exe` と違う状態では自動更新が壊れる。
+部分公開のまま終了してはいけない。特に `latest.yml` が無い、または `latest.yml` の `sha512` が公開済み `setup.exe` と違う状態では自動更新が壊れる。ポータブル ZIP を公開する場合は、同じビルドの ZIP と `.sha256` も揃える。
 
 ## 禁止・注意
 
@@ -143,7 +151,7 @@ pwsh -NoProfile -File scripts/verify-release-tag.ps1
     - 未コミットの作業ツリーからビルドすると、インストーラは新内容でも Git タグが古いコミットを指し、ソースと Release の対応がずれる
     - タグの付け直し（`git tag -f` / `git push -f`）が必要になる
 - `npm run dist:publish` を通常手順として使わない
-    - 使ってしまった場合は、上記「`dist:publish` が途中失敗した場合」に従い、assets 3 点とタグを検証する
+    - 使ってしまった場合は、上記「`dist:publish` が途中失敗した場合」に従い、assets 5 点とタグを検証する
 - `gh release upload --clobber` は、既存 asset の削除 / 置換に必要な権限を持つ `gh` 認証で実行する
 - Release 操作へ読み取り専用の `GH_TOKEN` をそのまま使わない。必ず `GITHUB_RELEASE_TOKEN` を一時割り当てし、終了時に元の値へ復元する
 - 認証トークンや個人環境の実パスを README、設定ファイル、コミット履歴、配布物へ含めない
@@ -161,6 +169,7 @@ git rev-parse HEAD
 git rev-parse origin/main
 
 npm run dist
+npm run package:portable
 
 $version = (Get-Content package.json -Raw | ConvertFrom-Json).version
 $tag = "v$version"
@@ -178,6 +187,8 @@ try {
 		"$releaseDir\TmsGrep-$version-setup.exe" `
 		"$releaseDir\TmsGrep-$version-setup.exe.blockmap" `
 		"$releaseDir\latest.yml" `
+		"$releaseDir\TmsGrep-$version-portable-x64.zip" `
+		"$releaseDir\TmsGrep-$version-portable-x64.zip.sha256" `
 		--repo $repo `
 		--target $target `
 		--title $tag `

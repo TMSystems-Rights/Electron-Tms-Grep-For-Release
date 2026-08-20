@@ -4,7 +4,7 @@ Everything Search（`es.exe`）によるファイル名検索と、ファイル�
 
 リポジトリ: [TMSystems-Rights/Electron-Tms-Grep-For-Release](https://github.com/TMSystems-Rights/Electron-Tms-Grep-For-Release)
 
-最新リリース: [v1.2.2](https://github.com/TMSystems-Rights/Electron-Tms-Grep-For-Release/releases/tag/v1.2.2)
+最新リリース: [v1.3.0](https://github.com/TMSystems-Rights/Electron-Tms-Grep-For-Release/releases/tag/v1.3.0)
 
 ## v1.0.0 の主な機能
 
@@ -91,7 +91,7 @@ HTML は Prettier 設定（`.prettierrc.json`）、CSS は VS Code 標準 CSS fo
 npm run test
 ```
 
-設定保存、es.exe 引数、ファイル内検索、検索ジョブ、コピー形式、UI 起動を自動検証します。
+設定保存、es.exe 引数、ファイル内検索、検索ジョブ、コピー形式、ポータブル判定／更新確認、UI 起動を自動検証します。
 
 ## キーボード操作（既定）
 
@@ -105,13 +105,19 @@ npm run test
 
 設定モーダルでキーバインドを変更できます。
 
-## 配布パッケージ作成（Windows インストーラ）
+## 配布パッケージ作成（Windows インストーラ / ポータブル ZIP）
 
 ```powershell
 npm run dist
+npm run package:portable
 ```
 
-出力先: `release/<version>/TmsGrep-<version>-setup.exe`（例: `release/1.2.2/TmsGrep-1.2.2-setup.exe`）
+出力先:
+
+- インストーラ: `release/<version>/TmsGrep-<version>-setup.exe`
+- ポータブル ZIP: `release/<version>/TmsGrep-<version>-portable-x64.zip`
+
+`npm run dist` は NSIS インストーラと `win-unpacked` を生成します。ポータブル ZIP は `electron-builder` の `zip` ターゲットでは作らず、`npm run package:portable` が `win-unpacked` を `TMS-GREP` 親フォルダごと固めて SHA-256 を出力します。
 
 `npm run dist` / `npm run dist:publish` 実行前に、`scripts/ensure-dist-ready.ps1` が `app.asar` の**上書き可否**（rename テスト）を検査します。問題があればビルド開始前に中止します（ファイルの削除は行いません）。
 
@@ -150,31 +156,35 @@ AI（Cursor 等）がリリース作業を行う場合は、`.cursor/rules/relea
 4. 変更を **git commit** する（バージョン更新を含むすべての変更）
 5. **git push origin main** する
 6. `git status` が clean で、`HEAD` と `origin/main` が一致していることを確認する
-7. **`npm run dist`** でローカル成果物を生成する
-8. GitHub Release に同一ビルドの成果物 3 点を公開する
-9. **タグの一致を確認する**（下記「公開後の確認」）
+7. **`npm run dist`** でインストーラ成果物を生成する
+8. **`npm run package:portable`** でポータブル ZIP と SHA-256 を生成する
+9. GitHub Release に同一ビルドの成果物 5 点を公開する
+10. **タグの一致を確認する**（下記「公開後の確認」）
 
 > **重要**: `npm run dist` / `npm run dist:publish` は **commit と push の後**に実行すること。未コミットの作業ツリーからビルドすると、インストーラは新内容でも Git タグが古いコミットを指し、ソースと Release の対応がずれる。
 
-通常のリリースでは `npm run dist:publish` は使わず、`npm run dist` で生成した 3 点を `gh release create/upload` で公開します。`dist:publish` を実行してしまった場合は、`.cursor/rules/release_workflow.mdc` の復旧手順に従い、assets 3 点とタグを検証してください。
+通常のリリースでは `npm run dist:publish` は使わず、`npm run dist` と `npm run package:portable` で生成した 5 点を `gh release create/upload` で公開します。`dist:publish` を実行してしまった場合は、`.cursor/rules/release_workflow.mdc` の復旧手順に従い、assets とタグを検証してください。
 
 #### dist 前の確認
 
 - `git status` が clean（未コミットの version 変更がない）
 - `git rev-parse HEAD` と `git rev-parse origin/main` が一致している
+- テスト・動作確認で起動した `TmsGrep.exe` / `electron.exe` が残っていない
 - **コミット済み**の `package.json` の `version` が今回のリリース番号と一致している
 
 #### 必須成果物
 
-`npm run dist` 後、`release/<version>/` に次の 3 点があることを確認します。
+`npm run dist` のあと `npm run package:portable` を実行し、`release/<version>/` に次の 5 点があることを確認します。
 
-| ファイル                               | 用途                                          |
-| -------------------------------------- | --------------------------------------------- |
-| `TmsGrep-<version>-setup.exe`          | NSIS インストーラ                             |
-| `TmsGrep-<version>-setup.exe.blockmap` | 差分更新用                                    |
-| `latest.yml`                           | electron-updater が参照する最新バージョン情報 |
+| ファイル                                   | 用途                                          |
+| ------------------------------------------ | --------------------------------------------- |
+| `TmsGrep-<version>-setup.exe`              | NSIS インストーラ                             |
+| `TmsGrep-<version>-setup.exe.blockmap`     | 差分更新用                                    |
+| `latest.yml`                               | electron-updater が参照する最新バージョン情報 |
+| `TmsGrep-<version>-portable-x64.zip`       | ポータブル ZIP                                |
+| `TmsGrep-<version>-portable-x64.zip.sha256` | ZIP の SHA-256（sha256sum 形式）            |
 
-`latest.yml` は同じ `npm run dist` で生成された `setup.exe` の `sha512` と `size` を持ちます。`npm run dist` を再実行した場合は、必ず上記 3 点を同じ実行結果でまとめて公開し直してください。
+`latest.yml` は同じ `npm run dist` で生成された `setup.exe` の `sha512` と `size` を持ちます。ポータブル ZIP は `latest.yml` に載せません。`npm run dist` を再実行した場合は、必ず setup.exe / blockmap / latest.yml の 3 点を同じ実行結果でまとめ、その `win-unpacked` から ZIP も作り直して公開し直してください。
 
 #### GitHub Release 公開
 
@@ -205,6 +215,8 @@ try {
 			"$releaseDir\TmsGrep-$version-setup.exe" `
 			"$releaseDir\TmsGrep-$version-setup.exe.blockmap" `
 			"$releaseDir\latest.yml" `
+			"$releaseDir\TmsGrep-$version-portable-x64.zip" `
+			"$releaseDir\TmsGrep-$version-portable-x64.zip.sha256" `
 			--repo $repo `
 			--clobber
 	} else {
@@ -212,6 +224,8 @@ try {
 			"$releaseDir\TmsGrep-$version-setup.exe" `
 			"$releaseDir\TmsGrep-$version-setup.exe.blockmap" `
 			"$releaseDir\latest.yml" `
+			"$releaseDir\TmsGrep-$version-portable-x64.zip" `
+			"$releaseDir\TmsGrep-$version-portable-x64.zip.sha256" `
 			--repo $repo `
 			--target $target `
 			--title $tag `
@@ -229,7 +243,7 @@ try {
 }
 ```
 
-既存 Release の場合は、同じ 3 点を `--clobber` でまとめて上書きします。最後の `gh release view` の出力で必須 3 点が揃っていることを確認してください。
+既存 Release の場合は、同じ 5 点を `--clobber` でまとめて上書きします。最後の `gh release view` の出力で必須 5 点が揃っていることを確認してください。
 
 #### 公開後の確認（必須）
 
@@ -251,7 +265,8 @@ git add .
 git commit -m "v1.x.x で〇〇を追加する"
 git push origin main
 npm run dist
-# 上記 GitHub Release 公開例の try/finally で、読み書きトークンを一時割り当てして3資産を公開
+npm run package:portable
+# 上記 GitHub Release 公開例の try/finally で、読み書きトークンを一時割り当てして5資産を公開
 git fetch origin tag v1.x.x
 pwsh -NoProfile -File scripts/verify-release-tag.ps1
 ```
@@ -269,11 +284,13 @@ pwsh -NoProfile -File scripts/verify-release-tag.ps1
 
 ### 自動更新
 
-v1.0.2 以降は GitHub Releases の `latest.yml` を使った自動更新に対応しています。
+インストーラ版は v1.0.2 以降、GitHub Releases の `latest.yml` を使った自動更新に対応しています。
 
-- パッケージ版のみ、起動約5秒後に更新を自動確認します
+- インストーラ版のみ、起動約5秒後に更新を自動確認します
 - 設定画面の「更新を確認」ボタンから手動確認できます
 - 更新が見つかると自動ダウンロードし、完了後に再起動確認を表示します
+
+ポータブル ZIP 版は `electron-updater` を使いません。同じタイミングで GitHub Releases API の `tag_name` だけを比較し、新しい版があれば公式ページへ誘導します。ZIP の自動置換は行いません。
 
 v1.0.1 以前には自動更新処理が入っていないため、v1.0.2 への更新だけは GitHub Release からインストーラを手動実行してください。
 
@@ -286,6 +303,19 @@ v1.0.1 以前には自動更新処理が入っていないため、v1.0.2 への
 | ショートカット | スタートメニュー（常時）、デスクトップ（追加タスク画面で選択）         |
 | 対象           | Windows 11 64bit                                                       |
 
+インストール後、データは `%APPDATA%\tms-grep\` に保存されます（開発版の `tms-grep-dev` とは別です）。
+
+### ポータブル ZIP の仕様
+
+| 項目     | 内容                                                      |
+| -------- | --------------------------------------------------------- |
+| 形式     | `TMS-GREP` フォルダを含む ZIP                             |
+| 起動     | 展開後に `TmsGrep.exe` を直接実行                         |
+| 判定     | exe と同じフォルダの `portable-mode.json`（削除禁止）     |
+| データ   | exe と同じ階層の `data\`                                  |
+| 更新     | 公式ページへ誘導。自動ダウンロードしない                  |
+| 依存     | Everything 本体と `es.exe` は同梱しない（インストーラ版と同じ） |
+
 ## アイコン
 
 `build/icon.png` / `build/icon.ico` を編集後、`npm run icon:build` で `.ico` を再生成できます。詳細は [build/README.md](build/README.md) を参照してください。
@@ -294,11 +324,23 @@ v1.0.1 では TMS-GREP 専用アイコンを採用しています。タスクバ
 
 ## 設定・ログの保存先
 
+インストーラ版 / 開発版:
+
 | 種別                 | パス                                       |
 | -------------------- | ------------------------------------------ |
 | 設定（開発時）       | `%APPDATA%\tms-grep-dev\config.json`       |
 | 設定（パッケージ版） | `%APPDATA%\tms-grep\config.json`           |
 | ログ                 | `%APPDATA%\tms-grep\logs\app-YYYYMMDD.log` |
+
+ポータブル ZIP 版:
+
+| 種別         | パス                              |
+| ------------ | --------------------------------- |
+| 判定ファイル | `<exeDir>\portable-mode.json`     |
+| 設定         | `<exeDir>\data\config.json`       |
+| ログ         | `<exeDir>\data\logs\`             |
+
+ポータブル版の書き込みできない場合は `%APPDATA%` へ逃がさず終了します。
 
 ## 既知の制約
 
@@ -319,6 +361,7 @@ src/
 ├── preload/    # preload スクリプト（TypeScript）
 └── renderer/   # 画面（HTML/CSS/Vanilla JS）
 scripts/        # 自動検証・ビルド補助
+resources/      # ポータブル ZIP 同梱ファイル
 build/          # アイコン・NSIS カスタム
 fixtures/       # テスト用サンプルファイル
 ```
