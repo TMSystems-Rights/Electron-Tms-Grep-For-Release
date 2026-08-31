@@ -4,7 +4,11 @@ Everything Search（`es.exe`）によるファイル名検索と、ファイル�
 
 リポジトリ: [TMSystems-Rights/Electron-Tms-Grep-For-Release](https://github.com/TMSystems-Rights/Electron-Tms-Grep-For-Release)
 
-最新リリース: [v1.3.0](https://github.com/TMSystems-Rights/Electron-Tms-Grep-For-Release/releases/tag/v1.3.0)
+最新リリース: [v1.3.1](https://github.com/TMSystems-Rights/Electron-Tms-Grep-For-Release/releases/tag/v1.3.1)
+
+## v1.3.1 の主な変更
+
+- 開発ポータル URL を環境変数 `TMS_PORTAL_DEVELOPMENT_URL` へ移し、ソースから開発用ホスト名を外す
 
 ## v1.0.0 の主な機能
 

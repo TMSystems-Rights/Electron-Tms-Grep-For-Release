@@ -9,7 +9,7 @@ TMS-GREP ポータブル ZIP 版
   削除するとインストーラ版として動作し、設定が %APPDATA% へ保存されます。
 - Windows の SmartScreen 等で警告が出ることがあります。
   「詳細情報」から実行できる場合は、その操作で問題ありません。
-- v1.3.0 時点ではコード署名はありません。
+- v1.3.1 時点ではコード署名はありません。
 - ファイル名検索には Everything 本体と es.exe が別途必要です。
   この ZIP には同梱していません。es.exe のパスは設定画面または
   EverythingCmdHome 環境変数で指定できます。
@@ -37,5 +37,4 @@ data フォルダは初回起動時に作成されます。配布 ZIP には含�
 自動ダウンロードや自動インストールは行いません。
 更新がある場合は、アプリが公式ページへ案内します。
 
-開発・確認用: https://cjac3.info/030_tms-portal/#apps
-本番: https://tm-systems.jp/#apps
+公式ページ: https://tm-systems.jp/#apps
