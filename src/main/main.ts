@@ -6,6 +6,7 @@ import {
 	getPreloadPath,
 	getRendererIndexPath,
 	registerIpcHandlers,
+	sendApplyTargetPath,
 	setMainWindow,
 } from './ipc';
 import { getCachedConfig, loadConfig } from './config-store';
@@ -13,6 +14,8 @@ import { logger } from './logger';
 import { PORTABLE_APP_USER_MODEL_ID } from './portable-mode';
 import { applyPortableRuntimeIfNeeded, getPortableExeDir, isPortableRuntime } from './portable-runtime';
 import { initUpdater, setAutoUpdaterWindow } from './updater';
+import { parseTargetPath } from './cli-args';
+import { setPendingLaunchTargetPath } from './launch-target-path';
 import {
 	applyTitleBarOverlay,
 	clampWindowSize,
@@ -224,7 +227,9 @@ function requestSingleInstance(): boolean {
 		return false;
 	}
 
-	app.on('second-instance', () => {
+	app.on('second-instance', (_event, argv) => {
+		const targetPath = rememberLaunchTargetPath(argv);
+
 		if (!mainWindow) {
 			mainWindow = createMainWindow();
 			return;
@@ -235,9 +240,31 @@ function requestSingleInstance(): boolean {
 		}
 
 		mainWindow.focus();
+
+		if (targetPath !== undefined) {
+			sendApplyTargetPath(targetPath);
+		}
 	});
 
 	return true;
+}
+
+/**
+ * 起動引数の `--target-path` を保持する
+ * @param {readonly string[]} argv 起動引数
+ * @returns {string | undefined} 対象フォルダ
+ */
+function rememberLaunchTargetPath(argv: readonly string[]): string | undefined {
+	const targetPath = parseTargetPath(argv);
+
+	if (targetPath === undefined) {
+		return undefined;
+	}
+
+	setPendingLaunchTargetPath(targetPath);
+	logger.info('Launch --target-path received');
+
+	return targetPath;
 }
 
 /**
@@ -247,6 +274,7 @@ function requestSingleInstance(): boolean {
 function bootstrap(): void {
 	applyPortableRuntimeIfNeeded();
 	configureDevUserData();
+	rememberLaunchTargetPath(process.argv);
 	const appUserModelId = resolveAppUserModelId();
 
 	app.setAppUserModelId(appUserModelId);

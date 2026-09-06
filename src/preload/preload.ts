@@ -17,6 +17,29 @@ const grepApi = {
 	isAdministrator: () => ipcRenderer.invoke('app:isAdministrator'),
 
 	/**
+	 * 起動引数の対象フォルダを取得する
+	 * @returns {Promise<string | null>} 対象フォルダ
+	 */
+	getLaunchTargetPath: () => ipcRenderer.invoke('app:getLaunchTargetPath'),
+
+	/**
+	 * 起動引数の対象フォルダ適用を購読する
+	 * @param {(targetPath: string) => void} callback コールバック
+	 * @returns {() => void} 購読解除関数
+	 */
+	onApplyTargetPath: (callback: (targetPath: string) => void) => {
+		/** 対象フォルダ適用時に呼び出すリスナー */
+		const listener = (_event: Electron.IpcRendererEvent, targetPath: string) => {
+			callback(targetPath);
+		};
+		ipcRenderer.on('app:apply-target-path', listener);
+
+		return () => {
+			ipcRenderer.removeListener('app:apply-target-path', listener);
+		};
+	},
+
+	/**
 	 * 設定を取得する
 	 * @returns {Promise<import('../main/types').LoadConfigResult>} 読込結果
 	 */

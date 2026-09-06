@@ -4,7 +4,12 @@ Everything Search（`es.exe`）によるファイル名検索と、ファイル�
 
 リポジトリ: [TMSystems-Rights/Electron-Tms-Grep-For-Release](https://github.com/TMSystems-Rights/Electron-Tms-Grep-For-Release)
 
-最新リリース: [v1.3.1](https://github.com/TMSystems-Rights/Electron-Tms-Grep-For-Release/releases/tag/v1.3.1)
+最新リリース: [v1.4.0](https://github.com/TMSystems-Rights/Electron-Tms-Grep-For-Release/releases/tag/v1.4.0)
+
+## v1.4.0 の主な変更
+
+- 起動引数 `--target-path <folder>` で対象フォルダを設定し、ファイル名検索条件へフォーカスする
+- 起動中に同じ引数で再起動すると、既存ウィンドウの対象フォルダを置き換えて前面化する
 
 ## v1.3.1 の主な変更
 
@@ -38,6 +43,8 @@ Everything 本体および CLI は、[公式 Downloads ページ](https://www.vo
 ```text
 C:\tmp, "C:\Program Files (x86)",
 ```
+
+他アプリから対象フォルダだけ渡す場合は、起動引数 `--target-path <folder>` を使います。存在しないフォルダでも入力欄には入り、検索時の既存エラー表示になります。
 
 `%APPDATA%` などの環境変数と、フォルダ名に対する `*` / `?` ワイルドカードを使用できます。先頭の `*\` は任意のドライブを表します。
 
@@ -95,7 +102,7 @@ HTML は Prettier 設定（`.prettierrc.json`）、CSS は VS Code 標準 CSS fo
 npm run test
 ```
 
-設定保存、es.exe 引数、ファイル内検索、検索ジョブ、コピー形式、ポータブル判定／更新確認、UI 起動を自動検証します。
+設定保存、es.exe 引数、起動引数、ファイル内検索、検索ジョブ、コピー形式、ポータブル判定／更新確認、UI 起動を自動検証します。
 
 ## キーボード操作（既定）
 

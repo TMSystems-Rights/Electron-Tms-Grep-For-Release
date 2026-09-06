@@ -1,6 +1,6 @@
 {
 	"name": "tms-grep",
-	"version": "1.3.1",
+	"version": "1.4.0",
 	"description": "Everything Search とファイル内検索を組み合わせた Windows 向け GUI 全文検索アプリ",
 	"main": "dist/main/main.js",
 	"scripts": {
@@ -24,12 +24,13 @@
 		"test:content-search": "node scripts/create-fixtures.mjs && npm run build:ts && node scripts/run-electron-test.mjs scripts/test-content-search.mjs",
 		"test:search-job": "node scripts/create-fixtures.mjs && npm run build:ts && node scripts/run-electron-test.mjs scripts/test-search-job.mjs",
 		"test:env-resolver": "npm run build:ts && node scripts/test-env-resolver.mjs",
+		"test:cli-args": "npm run build:ts && node scripts/test-cli-args.mjs",
 		"test:copy-format": "npm run build:ts && node scripts/test-copy-format.mjs",
 		"test:copy-text-transform": "npm run build:ts && node scripts/test-copy-text-transform.mjs",
 		"test:update-error": "npm run build:ts && node scripts/test-update-error.mjs",
 		"test:portable": "npm run build:ts && node scripts/test-portable.mjs",
 		"test:ui": "npm run build && node scripts/run-electron-test.mjs scripts/test-ui.mjs",
-		"test": "node --test scripts/test-placeholder.mjs && npm run test:config-store && npm run test:es-args && npm run test:content-search && npm run test:search-job && npm run test:env-resolver && npm run test:copy-format && npm run test:copy-text-transform && npm run test:update-error && npm run test:portable && npm run test:ui"
+		"test": "node --test scripts/test-placeholder.mjs && npm run test:config-store && npm run test:es-args && npm run test:content-search && npm run test:search-job && npm run test:env-resolver && npm run test:cli-args && npm run test:copy-format && npm run test:copy-text-transform && npm run test:update-error && npm run test:portable && npm run test:ui"
 	},
 	"repository": {
 		"type": "git",

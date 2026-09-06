@@ -345,6 +345,24 @@ Object.assign(TMS_GREP.Es, {
 			extensionsInput.value = lastSearch.targetExtensions ?? '';
 		}
 	},
+
+	/**
+	 * 起動引数の対象フォルダを入力欄へ入れ、ファイル名検索条件へフォーカスする
+	 * @param {string} targetPath 対象フォルダ
+	 * @returns {void}
+	 */
+	ApplyTargetPath: function (targetPath) {
+		const targetInput   = document.getElementById('tmsGrepTargetPath');
+		const fileNameInput = document.getElementById('tmsGrepFileNameQuery');
+
+		if (targetInput) {
+			targetInput.value = targetPath;
+		}
+
+		if (fileNameInput instanceof HTMLElement) {
+			fileNameInput.focus();
+		}
+	},
 });
 
 Object.assign(TMS_GREP.App, {
@@ -602,6 +620,17 @@ Object.assign(TMS_GREP.App, {
 			TMS_GREP.Results.Init();
 			TMS_GREP.Search.BindEvents();
 			TMS_GREP.Keyboard.BindEvents();
+
+			window.grepApi.onApplyTargetPath((targetPath) => {
+				TMS_GREP.Es.ApplyTargetPath(targetPath);
+			});
+
+			const launchTargetPath = await window.grepApi.getLaunchTargetPath();
+
+			if (typeof launchTargetPath === 'string' && launchTargetPath.length > 0) {
+				TMS_GREP.Es.ApplyTargetPath(launchTargetPath);
+			}
+
 			void TMS_GREP.Search.ValidateFileNameQuery();
 			void TMS_GREP.Search.ValidateContentRegex();
 			await TMS_GREP.Es.Detect();

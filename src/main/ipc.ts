@@ -38,6 +38,7 @@ import { openFile, showItemInFolder } from './shell-actions';
 import { applyTitleBarOverlay, resolveWindowChromeColors } from './window';
 import { checkForUpdatesManual } from './updater';
 import { isAdministrator } from './admin';
+import { getPendingLaunchTargetPath } from './launch-target-path';
 import {
 	cancelSearchJob,
 	getSearchJobState,
@@ -103,6 +104,36 @@ export function setMainWindow(win: BrowserWindow | null): void {
 }
 
 /**
+ * 起動引数の対象フォルダを Renderer へ渡す
+ * @param {string} targetPath 対象フォルダ
+ * @returns {void}
+ */
+export function sendApplyTargetPath(targetPath: string): void {
+	if (!mainWindow || mainWindow.isDestroyed()) {
+		return;
+	}
+
+	/**
+	 * Renderer へ対象フォルダを送る
+	 * @returns {void}
+	 */
+	const send = (): void => {
+		if (!mainWindow || mainWindow.isDestroyed()) {
+			return;
+		}
+
+		mainWindow.webContents.send('app:apply-target-path', targetPath);
+	};
+
+	if (mainWindow.webContents.isLoading()) {
+		mainWindow.webContents.once('did-finish-load', send);
+		return;
+	}
+
+	send();
+}
+
+/**
  * テーマ設定を nativeTheme に反映する
  * @param {'system' | 'dark' | 'light'} appearance 外観設定
  * @returns {void}
@@ -144,6 +175,10 @@ export function registerIpcHandlers(): void {
 
 	ipcMain.handle('app:isAdministrator', () => {
 		return runIpcHandler('app:isAdministrator', () => isAdministrator());
+	});
+
+	ipcMain.handle('app:getLaunchTargetPath', () => {
+		return getPendingLaunchTargetPath() ?? null;
 	});
 
 	ipcMain.handle('update:check', () => {
