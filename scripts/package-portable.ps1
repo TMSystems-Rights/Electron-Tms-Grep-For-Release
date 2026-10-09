@@ -66,12 +66,10 @@ function Add-ZipFileEntry {
 		$entryStream = $entry.Open()
 		try {
 			$sourceStream.CopyTo($entryStream)
-		}
-		finally {
+		} finally {
 			$entryStream.Dispose()
 		}
-	}
- finally {
+	} finally {
 		$sourceStream.Dispose()
 	}
 }
@@ -138,8 +136,7 @@ try {
 	Add-ZipFileEntry -Archive $archive -EntryName "$zipRoot/portable-mode.json" -SourcePath $markerSource
 	Add-ZipFileEntry -Archive $archive -EntryName "$zipRoot/README-PORTABLE.txt" -SourcePath $readmeSource
 	$added += 2
-}
-finally {
+} finally {
 	$archive.Dispose()
 	$zipStream.Dispose()
 }
@@ -171,8 +168,7 @@ try {
 	if ($names | Where-Object { $_ -eq "$zipRoot/data" -or $_.StartsWith("$zipRoot/data/") }) {
 		throw 'ZIP に利用者データ data/ が含まれています。'
 	}
-}
-finally {
+} finally {
 	$verify.Dispose()
 }
 

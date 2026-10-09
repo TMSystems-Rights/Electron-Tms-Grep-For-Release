@@ -44,15 +44,13 @@ function Add-SmallIconBadge {
 
 		try {
 			$Graphics.FillPath($textBrush, $textPath)
-		}
-		finally {
+		} finally {
 			$textBrush.Dispose()
 			$textPath.Dispose()
 			$textFormat.Dispose()
 			$fontFamily.Dispose()
 		}
-	}
- finally {
+	} finally {
 		$borderPen.Dispose()
 		$badgeBrush.Dispose()
 		$shadowBrush.Dispose()
@@ -123,8 +121,7 @@ function New-IconDibBytes {
 
 		$writer.Flush()
 		return , $ms.ToArray()
-	}
- finally {
+	} finally {
 		$writer.Dispose()
 		$ms.Dispose()
 		$g.Dispose()
@@ -142,8 +139,7 @@ try {
 			Bytes = [byte[]](New-IconDibBytes -Source $src -Size $size)
 		}
 	}
-}
-finally {
+} finally {
 	$src.Dispose()
 }
 
@@ -172,8 +168,7 @@ try {
 	foreach ($image in $images) {
 		$writer.Write($image.Bytes)
 	}
-}
-finally {
+} finally {
 	$writer.Dispose()
 	$stream.Dispose()
 }

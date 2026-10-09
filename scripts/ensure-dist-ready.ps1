@@ -48,8 +48,7 @@ function Test-AppAsarReplaceable {
 		Rename-Item -LiteralPath $AppAsarPath -NewName $probeName -ErrorAction Stop
 		Rename-Item -LiteralPath $probePath -NewName $fileName -ErrorAction Stop
 		return $true
-	}
- catch {
+	} catch {
 		return $false
 	}
 }
@@ -62,10 +61,10 @@ $appAsar = Join-Path $releaseRoot "$version\win-unpacked\resources\app.asar"
 
 foreach ($processName in @('TmsGrep', 'electron')) {
 	Get-CimInstance Win32_Process -Filter "Name='$processName.exe'" -ErrorAction SilentlyContinue |
-	Where-Object { Test-PathUnderDirectory $_.ExecutablePath $releaseRoot } |
-	ForEach-Object {
-		$issues.Add("$processName.exe が release 配下から起動中です (PID $($_.ProcessId)): $($_.ExecutablePath)")
-	}
+		Where-Object { Test-PathUnderDirectory $_.ExecutablePath $releaseRoot } |
+		ForEach-Object {
+			$issues.Add("$processName.exe が release 配下から起動中です (PID $($_.ProcessId)): $($_.ExecutablePath)")
+		}
 }
 
 if (-not (Test-AppAsarReplaceable -AppAsarPath $appAsar)) {
