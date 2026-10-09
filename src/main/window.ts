@@ -4,23 +4,17 @@ import { nativeTheme, screen, systemPreferences } from 'electron';
 import { logger } from './logger';
 
 /** ウィンドウ最小幅 */
-export const MIN_WINDOW_WIDTH = 900;
-
+export const MIN_WINDOW_WIDTH         = 900;
 /** ウィンドウ最小高さ */
-export const MIN_WINDOW_HEIGHT = 560;
-
+export const MIN_WINDOW_HEIGHT        = 560;
 /** ウィンドウ既定幅 */
-export const DEFAULT_WINDOW_WIDTH = 1100;
-
+export const DEFAULT_WINDOW_WIDTH     = 1100;
 /** ウィンドウ既定高さ */
-export const DEFAULT_WINDOW_HEIGHT = 760;
-
+export const DEFAULT_WINDOW_HEIGHT    = 760;
 /** カスタムタイトルバー高さ */
 export const TITLE_BAR_OVERLAY_HEIGHT = 48;
-
 /** Windows DWM レジストリキー */
-const DWM_REGISTRY_KEY = 'HKCU\\Software\\Microsoft\\Windows\\DWM';
-
+const DWM_REGISTRY_KEY                = 'HKCU\\Software\\Microsoft\\Windows\\DWM';
 /** ウィンドウクローム色 */
 export interface WindowChromeColors {
 	activeBackground: string;

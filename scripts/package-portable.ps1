@@ -17,7 +17,7 @@ function Get-PackageVersion {
 	param([string]$Root)
 
 	$packageJsonPath = Join-Path $Root 'package.json'
-	$packageJson     = Get-Content -LiteralPath $packageJsonPath -Raw | ConvertFrom-Json
+	$packageJson = Get-Content -LiteralPath $packageJsonPath -Raw | ConvertFrom-Json
 
 	return [string]$packageJson.version
 }
@@ -66,10 +66,12 @@ function Add-ZipFileEntry {
 		$entryStream = $entry.Open()
 		try {
 			$sourceStream.CopyTo($entryStream)
-		} finally {
+		}
+		finally {
 			$entryStream.Dispose()
 		}
-	} finally {
+	}
+ finally {
 		$sourceStream.Dispose()
 	}
 }
@@ -87,15 +89,15 @@ if ([string]::IsNullOrWhiteSpace($OutputDir)) {
 }
 
 $winUnpackedFull = [System.IO.Path]::GetFullPath($WinUnpackedDir)
-$outputFull      = [System.IO.Path]::GetFullPath($OutputDir)
-$exePath         = Join-Path $winUnpackedFull 'TmsGrep.exe'
-$markerSource    = Join-Path $ProjectRoot 'resources\portable-mode.json'
-$readmeSource    = Join-Path $ProjectRoot 'resources\README-PORTABLE.txt'
-$zipName         = "TmsGrep-$Version-portable-x64.zip"
-$hashName        = "$zipName.sha256"
-$zipPath         = Join-Path $outputFull $zipName
-$hashPath        = Join-Path $outputFull $hashName
-$zipRoot         = 'TMS-GREP'
+$outputFull = [System.IO.Path]::GetFullPath($OutputDir)
+$exePath = Join-Path $winUnpackedFull 'TmsGrep.exe'
+$markerSource = Join-Path $ProjectRoot 'resources\portable-mode.json'
+$readmeSource = Join-Path $ProjectRoot 'resources\README-PORTABLE.txt'
+$zipName = "TmsGrep-$Version-portable-x64.zip"
+$hashName = "$zipName.sha256"
+$zipPath = Join-Path $outputFull $zipName
+$hashPath = Join-Path $outputFull $hashName
+$zipRoot = 'TMS-GREP'
 
 if (-not (Test-Path -LiteralPath $exePath)) {
 	throw "win-unpacked が見つかりません: $exePath`nnpm run dist の後に実行してください。"
@@ -115,8 +117,8 @@ if (-not (Test-Path -LiteralPath $outputFull)) {
 
 $utf8NoBom = New-Object System.Text.UTF8Encoding $false
 $zipStream = [System.IO.File]::Create($zipPath)
-$archive   = New-Object System.IO.Compression.ZipArchive($zipStream, [System.IO.Compression.ZipArchiveMode]::Create)
-$added     = 0
+$archive = New-Object System.IO.Compression.ZipArchive($zipStream, [System.IO.Compression.ZipArchiveMode]::Create)
+$added = 0
 
 try {
 	$files = Get-ChildItem -LiteralPath $winUnpackedFull -Recurse -File
@@ -136,7 +138,8 @@ try {
 	Add-ZipFileEntry -Archive $archive -EntryName "$zipRoot/portable-mode.json" -SourcePath $markerSource
 	Add-ZipFileEntry -Archive $archive -EntryName "$zipRoot/README-PORTABLE.txt" -SourcePath $readmeSource
 	$added += 2
-} finally {
+}
+finally {
 	$archive.Dispose()
 	$zipStream.Dispose()
 }
@@ -168,7 +171,8 @@ try {
 	if ($names | Where-Object { $_ -eq "$zipRoot/data" -or $_.StartsWith("$zipRoot/data/") }) {
 		throw 'ZIP に利用者データ data/ が含まれています。'
 	}
-} finally {
+}
+finally {
 	$verify.Dispose()
 }
 

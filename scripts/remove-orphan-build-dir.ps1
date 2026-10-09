@@ -21,9 +21,9 @@ function Resolve-TargetPath {
 }
 
 $projectRootFull = [System.IO.Path]::GetFullPath($ProjectRoot).TrimEnd('\')
-$targetFull      = Resolve-TargetPath -PathValue $TargetDir -Root $projectRootFull
-$relativeTarget  = [System.IO.Path]::GetRelativePath($projectRootFull, $targetFull)
-$targetLeaf      = Split-Path -Leaf $targetFull
+$targetFull = Resolve-TargetPath -PathValue $TargetDir -Root $projectRootFull
+$relativeTarget = [System.IO.Path]::GetRelativePath($projectRootFull, $targetFull)
+$targetLeaf = Split-Path -Leaf $targetFull
 
 if ($relativeTarget.StartsWith('..') -or [System.IO.Path]::IsPathRooted($relativeTarget)) {
 	Write-Error "安全のため、プロジェクト外のフォルダは削除しません: $targetFull"

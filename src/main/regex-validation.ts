@@ -116,10 +116,10 @@ export function validateRegexPattern(
 	try {
 		if (options.contentSearch) {
 			const flags = `${options.caseSensitive ? '' : 'i'}gu`;
-			 
+
 			new RegExp(trimmed, flags);
 		} else {
-			 
+
 			new RegExp(trimmed);
 		}
 

@@ -10,7 +10,7 @@ $ErrorActionPreference = 'Stop'
 
 $resolvedPng = (Resolve-Path -LiteralPath $PngPath).Path
 $resolvedIco = [System.IO.Path]::GetFullPath($IcoPath)
-$sizes       = @(16, 24, 32, 48, 64, 128, 256)
+$sizes = @(16, 24, 32, 48, 64, 128, 256)
 
 function Add-SmallIconBadge {
 	param(
@@ -44,13 +44,15 @@ function Add-SmallIconBadge {
 
 		try {
 			$Graphics.FillPath($textBrush, $textPath)
-		} finally {
+		}
+		finally {
 			$textBrush.Dispose()
 			$textPath.Dispose()
 			$textFormat.Dispose()
 			$fontFamily.Dispose()
 		}
-	} finally {
+	}
+ finally {
 		$borderPen.Dispose()
 		$badgeBrush.Dispose()
 		$shadowBrush.Dispose()
@@ -121,7 +123,8 @@ function New-IconDibBytes {
 
 		$writer.Flush()
 		return , $ms.ToArray()
-	} finally {
+	}
+ finally {
 		$writer.Dispose()
 		$ms.Dispose()
 		$g.Dispose()
@@ -135,11 +138,12 @@ $images = @()
 try {
 	foreach ($size in $sizes) {
 		$images += [pscustomobject]@{
-			Size = $size
+			Size  = $size
 			Bytes = [byte[]](New-IconDibBytes -Source $src -Size $size)
 		}
 	}
-} finally {
+}
+finally {
 	$src.Dispose()
 }
 
@@ -168,7 +172,8 @@ try {
 	foreach ($image in $images) {
 		$writer.Write($image.Bytes)
 	}
-} finally {
+}
+finally {
 	$writer.Dispose()
 	$stream.Dispose()
 }

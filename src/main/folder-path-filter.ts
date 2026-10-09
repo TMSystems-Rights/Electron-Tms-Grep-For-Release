@@ -11,7 +11,7 @@ export interface FolderPathListResult {
 const FOLDER_WILDCARD_PATTERN = /[*?]/u;
 
 /** 未展開の環境変数参照 */
-const UNRESOLVED_ENV_PATTERN = /%([^%]+)%/u;
+const UNRESOLVED_ENV_PATTERN  = /%([^%]+)%/u;
 
 /**
  * カンマ区切り文字列を引用符に配慮して分割する
@@ -201,7 +201,7 @@ export function filterCandidatePaths(
 	excludePatterns: string[],
 	maxResults: number,
 ): string[] {
-	const targetMatchers = targetPatterns.map((pattern) => buildFolderPathRegExp(pattern, true));
+	const targetMatchers     = targetPatterns.map((pattern) => buildFolderPathRegExp(pattern, true));
 	// 要望票の例に合わせ、除外の通常パスは前方一致とする。
 	const excludeMatchers    = excludePatterns.map((pattern) => buildFolderPathRegExp(pattern, false));
 	const filtered: string[] = [];

@@ -11,7 +11,7 @@ function Get-PackageVersion {
 	param([string]$Root)
 
 	$packageJsonPath = Join-Path $Root 'package.json'
-	$packageJson     = Get-Content -LiteralPath $packageJsonPath -Raw | ConvertFrom-Json
+	$packageJson = Get-Content -LiteralPath $packageJsonPath -Raw | ConvertFrom-Json
 
 	return [string]$packageJson.version
 }
@@ -27,7 +27,7 @@ function Test-PathUnderDirectory {
 	}
 
 	$normalizedExecutable = [System.IO.Path]::GetFullPath($ExecutablePath)
-	$normalizedDirectory  = [System.IO.Path]::GetFullPath($DirectoryPath)
+	$normalizedDirectory = [System.IO.Path]::GetFullPath($DirectoryPath)
 
 	return $normalizedExecutable.StartsWith($normalizedDirectory, [StringComparison]::OrdinalIgnoreCase)
 }
@@ -40,7 +40,7 @@ function Test-AppAsarReplaceable {
 	}
 
 	$directory = Split-Path -Parent $AppAsarPath
-	$fileName  = Split-Path -Leaf $AppAsarPath
+	$fileName = Split-Path -Leaf $AppAsarPath
 	$probeName = ".dist-lock-probe-$([Guid]::NewGuid().ToString('N'))"
 	$probePath = Join-Path $directory $probeName
 
@@ -48,23 +48,24 @@ function Test-AppAsarReplaceable {
 		Rename-Item -LiteralPath $AppAsarPath -NewName $probeName -ErrorAction Stop
 		Rename-Item -LiteralPath $probePath -NewName $fileName -ErrorAction Stop
 		return $true
-	} catch {
+	}
+ catch {
 		return $false
 	}
 }
 
-$version     = Get-PackageVersion -Root $ProjectRoot
+$version = Get-PackageVersion -Root $ProjectRoot
 $releaseRoot = Join-Path $ProjectRoot 'release'
-$issues      = [System.Collections.Generic.List[string]]::new()
+$issues = [System.Collections.Generic.List[string]]::new()
 
 $appAsar = Join-Path $releaseRoot "$version\win-unpacked\resources\app.asar"
 
 foreach ($processName in @('TmsGrep', 'electron')) {
 	Get-CimInstance Win32_Process -Filter "Name='$processName.exe'" -ErrorAction SilentlyContinue |
-		Where-Object { Test-PathUnderDirectory $_.ExecutablePath $releaseRoot } |
-		ForEach-Object {
-			$issues.Add("$processName.exe が release 配下から起動中です (PID $($_.ProcessId)): $($_.ExecutablePath)")
-		}
+	Where-Object { Test-PathUnderDirectory $_.ExecutablePath $releaseRoot } |
+	ForEach-Object {
+		$issues.Add("$processName.exe が release 配下から起動中です (PID $($_.ProcessId)): $($_.ExecutablePath)")
+	}
 }
 
 if (-not (Test-AppAsarReplaceable -AppAsarPath $appAsar)) {
