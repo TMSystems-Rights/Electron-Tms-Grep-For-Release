@@ -10,15 +10,12 @@ import {
 
 /** 現行スキーマバージョン */
 export const CURRENT_SCHEMA_VERSION = 1;
-
 /** バックアップ保持世代数 */
-const BACKUP_RETENTION_COUNT = 10;
-
+const BACKUP_RETENTION_COUNT        = 10;
 /** 設定ファイル名 */
-const CONFIG_FILE_NAME = 'config.json';
-
+const CONFIG_FILE_NAME              = 'config.json';
 /** インメモリキャッシュ */
-let cachedConfig: AppConfig | null = null;
+let cachedConfig: AppConfig | null  = null;
 
 /**
  * 既定設定を生成する

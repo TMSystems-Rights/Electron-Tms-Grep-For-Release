@@ -9,7 +9,6 @@ export interface FolderPathListResult {
 
 /** フォルダパスのワイルドカード */
 const FOLDER_WILDCARD_PATTERN = /[*?]/u;
-
 /** 未展開の環境変数参照 */
 const UNRESOLVED_ENV_PATTERN  = /%([^%]+)%/u;
 
