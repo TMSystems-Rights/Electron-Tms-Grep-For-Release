@@ -201,7 +201,7 @@ AI（Cursor 等）がリリース作業を行う場合は、`.cursor/rules/relea
 
 `gh` で Release に成果物をアップロードします。公開リポジトリでは自動更新用の GitHub Release 取得にトークンは不要です。
 
-AppsLauncher / MDEditor と同じく、通常の `GH_TOKEN` は読み取り専用、`GITHUB_RELEASE_TOKEN` は Release 作成・asset アップロード用の読み書きトークンとして使い分けます。Release 操作中だけ `GITHUB_RELEASE_TOKEN` を `GH_TOKEN` に割り当て、処理後は必ず元の値へ復元します。
+通常時は OS 環境変数 `GH_TOKEN` を設定しません。Release 作成・asset アップロードには読み書き用の `GITHUB_RELEASE_TOKEN` を使用し、Release 操作中だけ `GH_TOKEN` に割り当て、処理後は必ず元の値へ復元します（元々未設定なら削除します）。
 
 ```powershell
 $version = (Get-Content package.json -Raw | ConvertFrom-Json).version
@@ -284,14 +284,13 @@ pwsh -NoProfile -File scripts/verify-release-tag.ps1
 
 #### 認証情報の扱い
 
-| 環境変数                 | GitHub上のトークン名               | 用途                                  |
-| ------------------------ | ---------------------------------- | ------------------------------------- |
-| `GH_TOKEN`               | Electronアプリ-読み取り専用        | 読み取り操作用                        |
-| `GITHUB_RELEASE_TOKEN`   | Electronアプリ-読み取り、書き込み  | Release 作成・asset アップロード用    |
+| 環境変数               | GitHub上のトークン名              | 用途                               |
+| ---------------------- | --------------------------------- | ---------------------------------- |
+| `GITHUB_RELEASE_TOKEN` | Electronアプリ-読み取り、書き込み | Release 作成・asset アップロード用 |
 
 `GITHUB_RELEASE_TOKEN` の Fine-grained PAT には、このリポジトリと `Contents: Read and write` を許可します。公開リポジトリでは、`electron-builder.yml` に `publish.private` や `publish.token` を設定しません。トークン値は README・設定ファイル・コンソールログ・コミット履歴・配布物へ含めないでください。
 
-403が発生しても、`GH_TOKEN` を削除してkeyring認証へフォールバックしません。まず `GITHUB_RELEASE_TOKEN` の設定、対象リポジトリ、書き込み権限を確認してください。
+403が発生しても、keyring認証へフォールバックしません。まず `GITHUB_RELEASE_TOKEN` の設定、対象リポジトリ、書き込み権限を確認してください。
 
 ### 自動更新
 

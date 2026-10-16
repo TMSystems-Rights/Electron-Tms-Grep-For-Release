@@ -36,7 +36,7 @@ alwaysApply: true
 
 ## GitHub Release 用トークン（AppsLauncher / MDEditor と共通）
 
-- `GH_TOKEN` は読み取り専用、`GITHUB_RELEASE_TOKEN` は Release 作成・asset アップロード用の読み書きトークンとして使い分ける。
+- 通常時は OS 環境変数 `GH_TOKEN` を設定しない。`GITHUB_RELEASE_TOKEN` は Release 作成・asset アップロード用の読み書きトークンとして使用する。
 - `gh release create` / `gh release upload` / `gh release view` の実行時だけ、`GITHUB_RELEASE_TOKEN` をプロセス環境の `GH_TOKEN` へ一時割り当てする。
 - 割り当て前の `GH_TOKEN` を保存し、`finally` で元の値へ復元する。元々未設定だった場合だけ削除する。
 - `GITHUB_RELEASE_TOKEN` が未設定のまま keyring へフォールバックして公開しない。403 の場合も `GH_TOKEN` を単純に削除せず、読み書きトークンの設定と対象リポジトリ権限を確認する。
@@ -153,7 +153,7 @@ pwsh -NoProfile -File scripts/verify-release-tag.ps1
 - `npm run dist:publish` を通常手順として使わない
     - 使ってしまった場合は、上記「`dist:publish` が途中失敗した場合」に従い、assets 5 点とタグを検証する
 - `gh release upload --clobber` は、既存 asset の削除 / 置換に必要な権限を持つ `gh` 認証で実行する
-- Release 操作へ読み取り専用の `GH_TOKEN` をそのまま使わない。必ず `GITHUB_RELEASE_TOKEN` を一時割り当てし、終了時に元の値へ復元する
+- Release 操作では必ず `GITHUB_RELEASE_TOKEN` を `GH_TOKEN` へ一時割り当てし、終了時に元の値へ復元する（元々未設定なら削除する）
 - 認証トークンや個人環境の実パスを README、設定ファイル、コミット履歴、配布物へ含めない
 - バージョンを上げない軽微な修正（README・設計ドキュメント等）では Release 公開は不要（commit → push だけでよい）
 
